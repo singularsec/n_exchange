@@ -35,7 +35,7 @@ static inline int is_code(enum CODE_TYPE type, int code) {
     case CHOICE_CODE: table = CHOICE_CODES; break;
     default: fprintf(stderr, "Invalid code type: %d\r\n", type); exit(1);
   }
-  
+
   return (code / 8 > sizeof(INT_CODES)) ? 0 : (table[code / 8] >> (7 - (code % 8))) & 1;
 }
 // #define IS_CODE(TABLE, X) ((X / 8 > sizeof((TABLE)_CODES)) ? 0 : (TABLE)_CODES[X / 8] >> (8 - X % 8))
@@ -45,28 +45,28 @@ split(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
   ErlNifBinary input;
   if(!enif_inspect_binary(env, argv[0], &input)) return enif_make_badarg(env);
-  
+
   unsigned char *ptr = input.data;
   unsigned char *end = input.data + input.size;
-  
+
   int state = READING_CODE;
   int code = 0;
   int ival = 0;
   int sign = 1;
   double dval = 0.0;
   double coeff = 1.0;
-  
+
   ERL_NIF_TERM *reply;
   int reply_capacity, reply_size;
-  
+
   reply_capacity = 16;
   reply = (ERL_NIF_TERM *)calloc(sizeof(ERL_NIF_TERM), reply_capacity);
   reply_size = 0;
-  
+
   int next_data_length = -1;
-  
+
   // fprintf(stderr, "Splitting %.*s\r\n", 20, (char *)ptr);
-  
+
   for(; ptr < input.data + input.size; ) {
     switch(state) {
       case READING_CODE:
@@ -88,18 +88,18 @@ split(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
             state = READING_STRING;
           }
           // fprintf(stderr, "Message %d, %s\r\n", code, FIELD_NAMES[code]);
-          
+
           if(reply_size >= reply_capacity - 2) {
             reply_capacity *= 2;
             reply = (ERL_NIF_TERM *)realloc(reply, reply_capacity*sizeof(ERL_NIF_TERM));
           }
-          
+
           ptr++;
           continue;
         }
         //FIXME: clean reply
         return enif_make_tuple3(env, enif_make_atom(env, "error"), enif_make_atom(env, "reading_code"), enif_make_int(env, ptr - input.data));
-      
+
       case READING_INT: {
         if(ptr < end && *ptr == '-') {
           sign = -1;
@@ -124,7 +124,7 @@ split(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         if(state == READING_INT) {
           // fprintf(stderr, "Read int %s = %d\r\n", FIELD_NAMES[code], ival);
           value = enif_make_int(env, ival*sign);
-          
+
           if(is_code(LENGTH_CODE, code)) {
             next_data_length = ival;
           }
@@ -136,7 +136,7 @@ split(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
           return enif_make_tuple3(env, enif_make_atom(env, "error"), enif_make_atom(env, "reading_int"), enif_make_int(env, ptr - input.data));
         }
         // fprintf(stderr, "Read int part of value: %d, %d\r\n", ival, *ptr);
-        
+
         ival = 0;
         dval = 0.0;
         coeff = 1.0;
@@ -153,10 +153,10 @@ split(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         //FIXME: clean reply
         return enif_make_tuple3(env, enif_make_atom(env, "error"), enif_make_atom(env, "reading_int_soh"), enif_make_int(env, ptr - input.data));
       }
-      
+
       case READING_STRING: {
         unsigned char *string_begin = ptr;
-        
+
         if(next_data_length >= 0) {
           ptr += next_data_length;
           if(ptr >= end || *ptr != 1) {
@@ -169,12 +169,12 @@ split(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
             ptr++;
           }
         }
-        
+
         if(ptr == end) {
           //FIXME: clean reply
           return enif_make_tuple3(env, enif_make_atom(env, "error"), enif_make_atom(env, "reading_string_soh"), enif_make_int(env, ptr - input.data));
         }
-        
+
         ERL_NIF_TERM value = atom_undefined;
         if(is_code(CHOICE_CODE, code)) {
           int i;
@@ -191,16 +191,16 @@ split(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
           memcpy(bin.data, string_begin, ptr - string_begin);
           value = enif_make_binary(env, &bin);
         }
-        
+
         reply[reply_size++] = enif_make_tuple2(env, code < MAX_FIELD_NUMBER ? FIELD_ATOMS[code] : enif_make_int(env, code), value);
-        
+
         // fprintf(stderr, "Read string %s -> '%.*s'\r\n", FIELD_NAMES[code], (int)(ptr - string_begin), string_begin);
         state = READING_CODE;
         code = 0;
         ptr++;
         continue;
       }
-      
+
       case READING_BOOL: {
         ERL_NIF_TERM value;
         if(*ptr == 'Y' || *ptr == 'y') {
@@ -213,7 +213,7 @@ split(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
           //FIXME: clean reply
           return enif_make_tuple3(env, enif_make_atom(env, "error"), enif_make_atom(env, "reading_bool_soh"), enif_make_int(env, ptr - input.data));
         }
-        
+
         reply[reply_size++] = enif_make_tuple2(env, code < MAX_FIELD_NUMBER ? FIELD_ATOMS[code] : enif_make_int(env, code), value);
         state = READING_CODE;
         code = 0;
@@ -223,11 +223,11 @@ split(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
       default: {
         //FIXME: clean reply
         return enif_make_tuple3(env, enif_make_atom(env, "error"), enif_make_atom(env, "reading_fix"), enif_make_int(env, ptr - input.data));
-        
+
       }
     }
   }
-  
+
   ERL_NIF_TERM list = enif_make_list_from_array(env, reply, reply_size);
   free(reply);
   return list;
@@ -247,7 +247,7 @@ field_by_number(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
   } else if(!enif_get_int(env, argv[0], &code)) {
     return enif_make_badarg(env);
   }
-  
+
   return (code > 0 && code <= MAX_FIELD_NUMBER) ? FIELD_ATOMS[code] : enif_make_int(env, code);
 }
 
@@ -257,11 +257,11 @@ static int load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info) {
   for(i = 0; i <= MAX_FIELD_NUMBER; i++) {
     FIELD_ATOMS[i] = enif_make_atom(env, FIELD_NAMES[i]);
   }
-  
+
   for(i = 0; CHOICE_VALUES[i].desc; i++) {
     CHOICE_VALUES[i].atom = enif_make_atom(env, CHOICE_VALUES[i].desc);
   }
-  
+
   atom_undefined = enif_make_atom(env, "undefined");
   atom_true = enif_make_atom(env, "true");
   atom_false = enif_make_atom(env, "false");
@@ -285,4 +285,4 @@ static ErlNifFunc fix_splitter_funcs[] =
 };
 
 
-ERL_NIF_INIT(fix_splitter, fix_splitter_funcs, load, reload, upgrade, NULL)
+ERL_NIF_INIT(fix_splitter44_xp, fix_splitter_funcs, load, reload, upgrade, NULL)
