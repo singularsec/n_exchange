@@ -10,7 +10,9 @@
 
 %% @doc packs fix message into binary
 -spec pack(atom(), list(), non_neg_integer(), any(), any()) -> iolist().
-pack(MessageType, Body, SeqNum, Sender, Target) when MessageType =/= undefined, is_list(Body), is_integer(SeqNum), Sender =/= undefined, Target =/= undefined ->
+pack(MessageType, Body, SeqNum, Sender, Target)
+     when MessageType =/= undefined, is_list(Body), is_integer(SeqNum), Sender =/= undefined, Target =/= undefined ->
+       
   Header2 = [{msg_type, MessageType},{sender_comp_id, Sender}, {target_comp_id, Target}, {msg_seq_num, SeqNum}
   % ,{poss_dup_flag, "N"}
   ] ++ case proplists:get_value(sending_time, Body) of
@@ -52,7 +54,7 @@ decode_fields(<<"8=FIX.4.4",1,"9=", Bin/binary>> = FullBin) ->
         <<Message:BodyLength/binary, "10=", _CheckSum:3/binary, 1, Rest2/binary>> ->
           MessageLength = size(FullBin) - size(Rest2),
           <<MessageBin:MessageLength/binary, _/binary>> = FullBin,
-          {ok, fix_splitter:split(Message), MessageBin, Rest2};
+          {ok, fix_splitter44:split(Message), MessageBin, Rest2};
         _ ->
           {more, BodyLength + 3 + 3 + 1 - size(Rest1)}
       end;

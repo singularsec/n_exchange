@@ -2,3 +2,4 @@
 /.eunit/
 /.rebar/
 /deps/
+*.DS_Store
