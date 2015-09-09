@@ -1,6 +1,6 @@
--module(fix_parser).
--include("../include/admin.hrl").
--include("../include/business.hrl").
+-module(fix_parser44).
+-include("../include/admin44.hrl").
+-include("../include/business44.hrl").
 
 -export([decode_message/1, field_by_number/1, number_by_field/1, decode_typed_field/2, encode_typed_field/2, message_by_number/1, number_by_message/1]).
 
@@ -6681,4 +6681,3 @@ parse_num(<<$., Bin/binary>>, Acc, 0) -> parse_num(Bin, Acc*1.0, 0.1);
 parse_num(<<X, Bin/binary>>, Acc, 0) -> parse_num(Bin, Acc*10 + X - $0, 0);
 parse_num(<<X, Bin/binary>>, Acc, Coeff) -> parse_num(Bin, Acc + (X - $0)*Coeff, Coeff*0.1);
 parse_num(<<>>, Acc, _) -> Acc.
-

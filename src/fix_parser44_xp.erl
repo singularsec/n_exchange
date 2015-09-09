@@ -1,6 +1,6 @@
--module(fix_parser).
--include("../include/admin.hrl").
--include("../include/business.hrl").
+-module(fix_parser44_xp).
+-include("../include/admin44_xp.hrl").
+-include("../include/business44_xp.hrl").
 
 -export([decode_message/1, field_by_number/1, number_by_field/1, decode_typed_field/2, encode_typed_field/2, message_by_number/1, number_by_message/1]).
 
@@ -41,7 +41,7 @@ decode_message([{msg_type,order_cancel_request}|Message]) -> % OrderCancelReques
   decode_fields(Message, #order_cancel_request{}, order_cancel_request, 44);
 
 decode_message([{msg_type,order_cancel_reject}|Message]) -> % OrderCancelReject
-  decode_fields(Message, #order_cancel_reject{}, order_cancel_reject, 71);
+  decode_fields(Message, #order_cancel_reject{}, order_cancel_reject, 69);
 
 decode_message([{msg_type,order_mass_status_request}|Message]) -> % OrderMassStatusRequest
   decode_fields(Message, #order_mass_status_request{}, order_mass_status_request, 10);
@@ -492,52 +492,50 @@ field_index(order_cancel_reject, cxl_rej_response_to) -> 21;
 field_index(order_cancel_reject, cxl_rej_reason) -> 22;
 field_index(order_cancel_reject, text) -> 23;
 field_index(order_cancel_reject, encoded_text) -> 24;
-field_index(order_cancel_reject, side) -> 25;
-field_index(order_cancel_reject, memo) -> 26;
-field_index(order_cancel_reject, qty_type) -> 27;
-field_index(order_cancel_reject, ord_type) -> 28;
-field_index(order_cancel_reject, price_type) -> 29;
-field_index(order_cancel_reject, price) -> 30;
-field_index(order_cancel_reject, stop_px) -> 31;
-field_index(order_cancel_reject, time_in_force) -> 32;
-field_index(order_cancel_reject, expire_date) -> 33;
-field_index(order_cancel_reject, leaves_qty) -> 34;
-field_index(order_cancel_reject, cum_qty) -> 35;
-field_index(order_cancel_reject, avg_px) -> 36;
-field_index(order_cancel_reject, handl_inst) -> 37;
-field_index(order_cancel_reject, min_qty) -> 38;
-field_index(order_cancel_reject, max_floor) -> 39;
-field_index(order_cancel_reject, max_show) -> 40;
-field_index(order_cancel_reject, appl_id) -> 41;
-field_index(order_cancel_reject, custom_data) -> 42;
-field_index(order_cancel_reject, custom_data2) -> 43;
-field_index(order_cancel_reject, custom_memo) -> 44;
-field_index(order_cancel_reject, custom_order_date) -> 45;
-field_index(order_cancel_reject, custom_scheduled) -> 46;
-field_index(order_cancel_reject, custom_scheduled_request) -> 47;
-field_index(order_cancel_reject, custom_scheduled_request_type) -> 48;
-field_index(order_cancel_reject, custom_cancel_previous_request) -> 49;
-field_index(order_cancel_reject, custom_user_id) -> 50;
-field_index(order_cancel_reject, custom_parent_order_id) -> 51;
-field_index(order_cancel_reject, custom_client_id) -> 52;
-field_index(order_cancel_reject, custom_extern_order_id) -> 53;
-field_index(order_cancel_reject, custom_orig_extern_order_id) -> 54;
-field_index(order_cancel_reject, custom_first_extern_order_id) -> 55;
-field_index(order_cancel_reject, custom_xp_user_id) -> 56;
-field_index(order_cancel_reject, custom_xp_user_type) -> 57;
-field_index(order_cancel_reject, custom_xp_platform_id) -> 58;
-field_index(order_cancel_reject, custom_advisor_id) -> 59;
-field_index(order_cancel_reject, custom_exchange_port_id) -> 60;
-field_index(order_cancel_reject, custom_rejected_xp_user_id) -> 61;
-field_index(order_cancel_reject, custom_rejected_xp_user_type) -> 62;
-field_index(order_cancel_reject, custom_stop_type) -> 63;
-field_index(order_cancel_reject, custom_stop_gain_trigger_px) -> 64;
-field_index(order_cancel_reject, custom_stop_gain_order_px) -> 65;
-field_index(order_cancel_reject, custom_stop_loss_trigger_px) -> 66;
-field_index(order_cancel_reject, custom_stop_loss_order_px) -> 67;
-field_index(order_cancel_reject, custom_stop_triggered_side) -> 68;
-field_index(order_cancel_reject, custom_stop_triggered_price) -> 69;
-field_index(order_cancel_reject, custom_stop_triggered_time) -> 70;
+field_index(order_cancel_reject, memo) -> 25;
+field_index(order_cancel_reject, qty_type) -> 26;
+field_index(order_cancel_reject, price_type) -> 27;
+field_index(order_cancel_reject, price) -> 28;
+field_index(order_cancel_reject, stop_px) -> 29;
+field_index(order_cancel_reject, time_in_force) -> 30;
+field_index(order_cancel_reject, expire_date) -> 31;
+field_index(order_cancel_reject, leaves_qty) -> 32;
+field_index(order_cancel_reject, cum_qty) -> 33;
+field_index(order_cancel_reject, avg_px) -> 34;
+field_index(order_cancel_reject, handl_inst) -> 35;
+field_index(order_cancel_reject, min_qty) -> 36;
+field_index(order_cancel_reject, max_floor) -> 37;
+field_index(order_cancel_reject, max_show) -> 38;
+field_index(order_cancel_reject, appl_id) -> 39;
+field_index(order_cancel_reject, custom_data) -> 40;
+field_index(order_cancel_reject, custom_data2) -> 41;
+field_index(order_cancel_reject, custom_memo) -> 42;
+field_index(order_cancel_reject, custom_order_date) -> 43;
+field_index(order_cancel_reject, custom_scheduled) -> 44;
+field_index(order_cancel_reject, custom_scheduled_request) -> 45;
+field_index(order_cancel_reject, custom_scheduled_request_type) -> 46;
+field_index(order_cancel_reject, custom_cancel_previous_request) -> 47;
+field_index(order_cancel_reject, custom_user_id) -> 48;
+field_index(order_cancel_reject, custom_parent_order_id) -> 49;
+field_index(order_cancel_reject, custom_client_id) -> 50;
+field_index(order_cancel_reject, custom_extern_order_id) -> 51;
+field_index(order_cancel_reject, custom_orig_extern_order_id) -> 52;
+field_index(order_cancel_reject, custom_first_extern_order_id) -> 53;
+field_index(order_cancel_reject, custom_xp_user_id) -> 54;
+field_index(order_cancel_reject, custom_xp_user_type) -> 55;
+field_index(order_cancel_reject, custom_xp_platform_id) -> 56;
+field_index(order_cancel_reject, custom_advisor_id) -> 57;
+field_index(order_cancel_reject, custom_exchange_port_id) -> 58;
+field_index(order_cancel_reject, custom_rejected_xp_user_id) -> 59;
+field_index(order_cancel_reject, custom_rejected_xp_user_type) -> 60;
+field_index(order_cancel_reject, custom_stop_type) -> 61;
+field_index(order_cancel_reject, custom_stop_gain_trigger_px) -> 62;
+field_index(order_cancel_reject, custom_stop_gain_order_px) -> 63;
+field_index(order_cancel_reject, custom_stop_loss_trigger_px) -> 64;
+field_index(order_cancel_reject, custom_stop_loss_order_px) -> 65;
+field_index(order_cancel_reject, custom_stop_triggered_side) -> 66;
+field_index(order_cancel_reject, custom_stop_triggered_price) -> 67;
+field_index(order_cancel_reject, custom_stop_triggered_time) -> 68;
 field_index(order_mass_status_request, sending_time) -> 2;
 field_index(order_mass_status_request, mass_status_req_id) -> 3;
 field_index(order_mass_status_request, mass_status_req_type) -> 4;
@@ -4681,4 +4679,3 @@ parse_num(<<$., Bin/binary>>, Acc, 0) -> parse_num(Bin, Acc*1.0, 0.1);
 parse_num(<<X, Bin/binary>>, Acc, 0) -> parse_num(Bin, Acc*10 + X - $0, 0);
 parse_num(<<X, Bin/binary>>, Acc, Coeff) -> parse_num(Bin, Acc + (X - $0)*Coeff, Coeff*0.1);
 parse_num(<<>>, Acc, _) -> Acc.
-
