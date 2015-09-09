@@ -7,37 +7,54 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+
+match_sell_order_test() ->
+  Book = nexchange_book:create(),
+
+  nexchange_book:insert_buy(#order{price = 10, time = 0, qtd = 100, id = "t1"}, Book),
+  nexchange_book:insert_buy(#order{price = 10, time = 0, qtd = 100, id = "t2"}, Book),
+  nexchange_book:insert_buy(#order{price =  9, time = 0, qtd = 100, id = "t3"}, Book),
+  nexchange_book:insert_buy(#order{price =  9, time = 0, qtd = 100, id = "t4"}, Book),
+  nexchange_book:insert_buy(#order{price = 11, time = 0, qtd = 100, id = "t5"}, Book),
+
+  Selection = nexchange_book:match_sell_order(#order{price=9, time = 0, qtd=150, id="s1"}, Book),
+  
+
+  error_logger:info_msg("Result is ~p ~n", Selection).
+
+
+
 sells_book_has_proper_order_test() ->
   Book = nexchange_book:create(),
 
   nexchange_book:insert_sell(#order{price = 10, time = 0, qtd = 100, id = "t1"}, Book),
   nexchange_book:insert_sell(#order{price = 10, time = 0, qtd = 100, id = "t2"}, Book),
-  nexchange_book:insert_sell(#order{price = 9, time = 0, qtd = 100, id = "t3"}, Book),
+  nexchange_book:insert_sell(#order{price =  9, time = 0, qtd = 100, id = "t3"}, Book),
 
   % Collector = fun (Item,S) -> error_logger:info_msg("Item is ~p ~n", hd(Item)#order.id ), S end,
-  Collector = fun (Item, S) -> S ++ [(hd(Item))#order.id] end,
+  Collector = fun (Item, S) -> S ++ [Item#order.id] end,
 
   Result = nexchange_book:list_sells(Book, Collector, []),
 
-  ?assertEqual(Result, ["t3","t1","t2"]).
+  ?assertEqual(["t3","t1","t2"], Result).
   %error_logger:info_msg("Result is ~p ~n", Result).
+
+
 
 buy_book_has_proper_order_test() ->
   Book = nexchange_book:create(),
 
   nexchange_book:insert_buy(#order{price = 10, time = 0, qtd = 100, id = "t1"}, Book),
   nexchange_book:insert_buy(#order{price = 10, time = 0, qtd = 100, id = "t2"}, Book),
-  nexchange_book:insert_buy(#order{price = 9, time = 0, qtd = 100, id = "t3"}, Book),
+  nexchange_book:insert_buy(#order{price =  9, time = 0, qtd = 100, id = "t3"}, Book),
   nexchange_book:insert_buy(#order{price = 11, time = 0, qtd = 100, id = "t4"}, Book),
 
-  Collector = fun (Item, S) -> S ++ [(hd(Item))#order.id] end,
+  Collector = fun (Item, S) -> S ++ [Item#order.id] end,
 
   Result = nexchange_book:list_buys(Book, Collector, []),
 
-  ?assertEqual(Result, ["t4","t1","t2", "t3"]).
+  ?assertEqual(["t4","t1","t2", "t3"], Result).
   %error_logger:info_msg("Result is ~p ~n", Result).
-
-
 
 normalize_price_test() ->
   ?assertEqual(nexchange_book:normalize_price(10), 100000),
