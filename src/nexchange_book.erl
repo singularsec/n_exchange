@@ -20,9 +20,13 @@ create() ->
 %% TODO: limit orders
 %% TODO: stop order with protection
 %% TODO: stop order limit
+%% TODO: market with leftover as limit
 
 
 match_sell_order(#order{} = Order, Book) ->
+  % if is valid
+  % notify_accepted()
+  
   SellOrder = insert_sell(Order, Book),
   Collector = fun (Item, {Selected, QtdToFill, DesiredPrice} ) ->
     if
