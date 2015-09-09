@@ -18,9 +18,9 @@ match_sell_order_test() ->
   nexchange_book:insert_buy(#order{price = 11, time = 0, qtd = 100, id = "t5"}, Book),
 
   Selection = nexchange_book:match_sell_order(#order{price=9, time = 0, qtd=150, id="s1"}, Book),
-  
 
-  error_logger:info_msg("Result is ~p ~n", Selection).
+  % error_logger:info_msg("Result is ~p ~n", Selection).
+  ok.
 
 
 
