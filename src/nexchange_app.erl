@@ -10,12 +10,8 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    case nexchange_sup:start_link() of
-      {ok, Pid} ->
-        {ok, Pid};
-      Other ->
-        {error, Other}
-    end.
+    % case nexchange_sup:start_link() of
+    nexchange_sup_sup:start_link().
 
 stop(_State) ->
     ok.

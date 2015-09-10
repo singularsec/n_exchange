@@ -12,7 +12,7 @@
 -spec pack(atom(), list(), non_neg_integer(), any(), any()) -> iolist().
 pack(MessageType, Body, SeqNum, Sender, Target)
      when MessageType =/= undefined, is_list(Body), is_integer(SeqNum), Sender =/= undefined, Target =/= undefined ->
-       
+
   Header2 = [{msg_type, MessageType},{sender_comp_id, Sender}, {target_comp_id, Target}, {msg_seq_num, SeqNum}
   % ,{poss_dup_flag, "N"}
   ] ++ case proplists:get_value(sending_time, Body) of
