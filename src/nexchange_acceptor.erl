@@ -15,34 +15,38 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--record(ate, { field = undefined :: any() }).
+-record(state, { socket }).
 
 % API
 
--spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
-start_link(Args) -> 
-	gen_server:start_link(?MODULE, Args, []).
+% -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
+start_link([Socket, Cb]) ->
+	gen_server:start_link({local,?MODULE}, ?MODULE, Socket, []).
 
 % Callback
 
-init(_Args) ->
-    State = #ate{
-        field = undefined
-    },
-    {ok, State}.
+init([Socket, Cb]) ->
+  get_server:cast( self(), accept ),
+  { ok, #state{socket=Socket} }.
 
-handle_call(_Request, _From, State) -> 
-	{stop, unimplemented, State}.
+handle_call(_Request, _From, State) ->
+	{noreply, State}.
 
-handle_cast(_Request, State) -> 
-	{stop, unimplemented, State}.
+handle_cast(accept, #state{socket = Socket} = State) ->
+  {ok, NewSocket} = gen_tcp:accept(Socket),
 
-handle_info(_Info, State) -> 
-	{stop, unimplemented, State}.
+  % nexchange_fixsession_sup:create_session(NewSocket),
 
-terminate(_Reason, State) -> 
+  % restart listening
+  % gen_server:cast( self(), accept ),
+
+	{noreply, State}.
+
+handle_info(_Info, State) ->
+	{noreply, State}.
+
+terminate(_Reason, State) ->
 	{ok, State}.
 
-code_change(_OldVsn, State, _Extra) -> 
+code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
-

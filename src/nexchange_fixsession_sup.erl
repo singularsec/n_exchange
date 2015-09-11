@@ -29,7 +29,6 @@ create_session(Socket) ->
   {ok, _} = gen_tcp:controlling_process(Socket, Child),
   {ok, Child}.
 
-
 % Callback
 
 init(Args) ->

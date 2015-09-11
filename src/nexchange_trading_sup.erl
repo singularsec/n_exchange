@@ -20,11 +20,11 @@
 %% @doc Short description.
 -spec start_link(term())->{ok,pid()}|ignore|{error,any()}.
 start_link(Args) ->
-  supervisor:start_link(?MODULE, Args).
+  supervisor:start_link({local, ?MODULE}, ?MODULE, Args).
 
 % creates a book for a symbol
 create_book(Symbol) ->
-  supervisor:start_child(nexchange_trading_book, [Symbol]),
+  supervisor:start_child(?MODULE, [Symbol]),
   ok.
 
 % Callback
@@ -40,4 +40,4 @@ init(_Args) ->
          , [nexchange_trading_book]
          },
 
-    {ok, {Restart,[]}}.
+    {ok, {Restart,[ChildSpec]}}.
