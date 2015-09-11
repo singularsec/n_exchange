@@ -8,16 +8,6 @@
 start_link() ->
   supervisor:start_link({local, nexchange_sup_sup}, ?MODULE, []).
 
-% start_pool(Name, Limit, MFA) ->
-%     ChildSpec = {Name,
-%                  {sup1, start_link, [Name, Limit, MFA]},
-%                   permanent, 10500, supervisor, [sup1]},
-%     supervisor:start_child(nexchange_sup_sup, ChildSpec).
-
-% stop_pool(Name) ->
-%     supervisor:terminate_child(nexchange_sup_sup, Name),
-%     supervisor:delete_child(nexchange_sup_sup, Name).
-
 
 % runs in the context of nexchange_acceptor_sup so it's safe to transfer ownership of socket
 on_accepted_socket(Socket) ->

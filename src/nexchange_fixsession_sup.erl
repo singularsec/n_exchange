@@ -32,7 +32,9 @@ create_session(Socket) ->
 
 % Callback
 
-init(_Args) ->
+init(Args) ->
+  [Socket] = Args,
+
   ChildSpec = {nexchange_fixsession
        , {nexchange_fixsession, start_link, [Socket]}
        , temporary
@@ -44,4 +46,3 @@ init(_Args) ->
   Restart = {simple_one_for_one, 2, 5},
 
   {ok, {Restart,[ChildSpec]}}.
-

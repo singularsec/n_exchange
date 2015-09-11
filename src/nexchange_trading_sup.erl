@@ -20,22 +20,24 @@
 %% @doc Short description.
 -spec start_link(term())->{ok,pid()}|ignore|{error,any()}.
 start_link(Args) ->
-    supervisor:start_link(?MODULE, Args).
+  supervisor:start_link(?MODULE, Args).
 
+% creates a book for a symbol
+create_book(Symbol) ->
+  supervisor:start_child(nexchange_trading_book, [Symbol]),
+  ok.
 
 % Callback
 
 init(_Args) ->
-    
-    Restart = {one_for_one, 2, 5},
+    Restart = {simple_one_for_one, 2, 5},
 
-    ChildSpec = { arbitrary_internal_name_term
-         , {mod,func,args}
+    ChildSpec = { nexchange_trading_book
+         , {nexchange_trading_book,start_link,[]}
          , permanent
          , 200 % ms
          , worker
-         , [mod]
+         , [nexchange_trading_book]
          },
 
     {ok, {Restart,[]}}.
-

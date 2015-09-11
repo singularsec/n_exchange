@@ -56,4 +56,3 @@
   msg_types = [],
   fields = []
 }).
-
