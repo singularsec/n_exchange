@@ -26,9 +26,9 @@ handle_call(_E, _From, State) ->
 
 handle_cast(accept, #state{socket=ListenSocket} = State) ->
   {ok, Socket} = gen_tcp:accept(ListenSocket),
-  
+
   % restart
-  get_server:cast( self(), accept ),
+  gen_server:cast( self(), accept ),
 
   {noreply, State}.
 
