@@ -13,12 +13,17 @@ start_link() ->
 on_accepted_socket(Socket) ->
   % todo create fix session, transfer socket to new worker
   % _Session = nexchange_fixsession_sup:create_session(Socket),
-
+  error_logger:info_msg("on_accepted_socket invoked ~p ~n", Socket),
   ok.
 
-init([]) ->
+% start_stuff() ->
+%   nexchange_acceptor_sup:start_listeners().
+
+init(_Args) ->
+  OnAcceptCallback = {?MODULE, on_accepted_socket},
+
   TcpAcceptorSpec = {nexchange_acceptor_sup,
-                      {nexchange_acceptor_sup, start_link, [ on_accepted_socket ]},
+                      {nexchange_acceptor_sup, start_link, [ OnAcceptCallback ]},
                       permanent, 10000, supervisor, [nexchange_acceptor_sup]},
 
   FixSupSpec      = {nexchange_fixsession_sup,
