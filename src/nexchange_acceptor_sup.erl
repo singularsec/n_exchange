@@ -33,7 +33,7 @@ create_acceptor() ->
 init(Args) ->
   Callback = Args,
 
-  {ok, Listener} = gen_tcp:listen(8000, [binary, {active, true}]),
+  {ok, Listener} = gen_tcp:listen(8000, [binary, {active, true}, {nodelay, true}]),
 
   Restart = {simple_one_for_one, 60, 3600},
 

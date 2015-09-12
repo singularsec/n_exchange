@@ -1,1 +1,1 @@
--record(state, {socket,authenticated,heartbeat,username,password,account,prevbuffer=[]}).
+-record(state, {socket,authenticated,lastheartbeat,username,password,account,prevbuffer=[],seq}).

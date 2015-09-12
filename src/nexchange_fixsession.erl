@@ -24,13 +24,13 @@
 
 % -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
 start_link(Socket) ->
-  gen_server:start_link({local,?MODULE}, ?MODULE, [Socket], []).
+  gen_server:start_link(?MODULE, Socket, []).
 
 % Callback
 
 init(Socket) ->
   EmptyBuffer = <<>>,
-  State = #state{socket = Socket, authenticated=false, prevbuffer=EmptyBuffer},
+  State = #state{socket=Socket, seq=0, authenticated=false, prevbuffer=EmptyBuffer},
   {ok, State}.
 
 handle_call(_Request, _From, State) ->
@@ -64,7 +64,7 @@ handle_info({tcp, _Socket, Data}, #state{authenticated=true,prevbuffer=PrevBuf} 
 
 
 handle_info({tcp_closed, _Socket}, State) ->
-  {noreply, State};
+  {stop, normal, State};
 
 handle_info(_Info, State) ->
 	{stop, unimplemented, State}.
