@@ -14,6 +14,7 @@ on_accepted_socket(Socket) ->
   % todo create fix session, transfer socket to new worker
   % _Session = nexchange_fixsession_sup:create_session(Socket),
   error_logger:info_msg("on_accepted_socket invoked ~p ~n", Socket),
+  nexchange_fixsession_sup:create_session(Socket),
   ok.
 
 % start_stuff() ->
@@ -37,7 +38,6 @@ init(_Args) ->
   MaxRestart = 6,
   MaxTime = 3000,
 
-  %TradingSupSpec,FixSupSpec,
-  Specs = [TcpAcceptorSpec],
+  Specs = [FixSupSpec, TcpAcceptorSpec, TradingSupSpec],
 
   {ok, {{one_for_one, MaxRestart, MaxTime}, Specs}}.

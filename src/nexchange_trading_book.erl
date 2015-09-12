@@ -7,7 +7,7 @@
 
 % API
 
--export([start_link/1]).
+-export([start_link/0]).
 
 % Callback
 
@@ -21,14 +21,15 @@
 
 % API
 
--spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
-start_link(Args) ->
-	gen_server:start_link(?MODULE, Args, []).
+% -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
+start_link() ->
+	% gen_server:start_link(?MODULE, Args, []).
+  gen_server:start_link({local,?MODULE}, ?MODULE, [], []).
 
 % Callback
 
-init(Args) ->
-    [Symbol] = Args,
+init(_Symbol) ->
+    % [Symbol] = Args,
     % create book instance...
 
     State = #state{book = undefined},

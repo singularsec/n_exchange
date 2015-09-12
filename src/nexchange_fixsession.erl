@@ -6,6 +6,11 @@
 
 -behaviour(gen_server).
 
+-include("../include/fix_session.hrl").
+-include("../include/admin44.hrl").
+-include("../include/business44.hrl").
+
+
 % API
 
 -export([start_link/1]).
@@ -15,36 +20,61 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--record(ate, 
-    { field = undefined :: any() %
-    }).
-
 % API
 
--spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
-start_link(Args) -> 
-	gen_server:start_link(?MODULE, Args, []).
+% -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
+start_link(Socket) ->
+  gen_server:start_link({local,?MODULE}, ?MODULE, [Socket], []).
 
 % Callback
 
-init(_Args) ->
-  State = #ate{
-      field = undefined
-  },
+init(Socket) ->
+  EmptyBuffer = <<>>,
+  State = #state{socket = Socket, authenticated=false, prevbuffer=EmptyBuffer},
   {ok, State}.
 
-handle_call(_Request, _From, State) -> 
+handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.
 
-handle_cast(_Request, State) -> 
+handle_cast(write, State) ->
+  % output to socket
+  {noreply, State};
+
+handle_cast(_Request, State) ->
 	{stop, unimplemented, State}.
 
-handle_info(_Info, State) -> 
+handle_info({tcp, _Socket, Data}, #state{authenticated=false,prevbuffer=PrevBuf} = State) ->
+  Buffer = <<PrevBuf/binary, Data/binary>>,
+  error_logger:info_msg("received logon? from socket ~p ~n", [Data]),
+  % expecting a logon message and only a logon message
+  % Logon = fix:decode(Data),
+
+  {Messages, Rest} = fix_connection:decode_messages(Buffer),
+
+  fix_message_handler:handle_messages(Messages, Rest, State#state{prevbuffer=Buffer});
+
+
+handle_info({tcp, _Socket, Data}, #state{authenticated=true,prevbuffer=PrevBuf} = State) ->
+  Buffer = <<PrevBuf/binary, Data/binary>>,
+  error_logger:info_msg("received something from socket ~p ~n", [Data]),
+
+  {Messages, Rest} = fix_connection:decode_messages(Buffer),
+
+  fix_message_handler:handle_messages(Messages, Rest, State#state{prevbuffer=Buffer});
+
+
+handle_info({tcp_closed, _Socket}, State) ->
+  {noreply, State};
+
+handle_info(_Info, State) ->
 	{stop, unimplemented, State}.
 
-terminate(_Reason, State) -> 
+
+terminate(_Reason, State) ->
 	{ok, State}.
 
-code_change(_OldVsn, State, _Extra) -> 
+code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
 
+
+% Internal implementation

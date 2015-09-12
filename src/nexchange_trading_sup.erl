@@ -8,7 +8,7 @@
 
 % API
 
--export([start_link/1]).
+-export([start_link/0]).
 
 % Callback
 
@@ -18,9 +18,9 @@
 % API
 
 %% @doc Short description.
--spec start_link(term())->{ok,pid()}|ignore|{error,any()}.
-start_link(Args) ->
-  supervisor:start_link({local, ?MODULE}, ?MODULE, Args).
+% -spec start_link(term())->{ok,pid()}|ignore|{error,any()}.
+start_link() ->
+  supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 % creates a book for a symbol
 create_book(Symbol) ->

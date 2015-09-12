@@ -49,4 +49,4 @@ init(Args) ->
   {ok, {Restart,[ChildSpec]}}.
 
 start_listeners() ->
-  [create_acceptor() || _ <- lists:seq(1,1) ], ok.
+  [create_acceptor() || _ <- lists:seq(1,5) ], ok.

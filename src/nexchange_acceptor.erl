@@ -20,7 +20,7 @@
 
 % -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
 start_link(Socket, Cb) ->
-	gen_server:start_link({local,?MODULE}, ?MODULE, [Socket, Cb], []).
+	gen_server:start_link(?MODULE, [Socket, Cb], []).
 
 
 % Callback
@@ -40,10 +40,10 @@ handle_cast(accept, #state{socket = Socket, callb = Cb} = State) ->
   {Mod, Fn} = Cb,
   erlang:apply(Mod, Fn, [NewSocket]),
 
-  % restart listening
-  % gen_server:cast( self(), accept ),
+  % replace ourselves with new acceptor
+  nexchange_acceptor_sup:create_acceptor(),
 
-	{noreply, State}.
+	{stop, normal, State}.
 
 handle_info(_Info, State) ->
 	{noreply, State}.

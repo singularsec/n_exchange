@@ -8,7 +8,7 @@
 
 % API
 
--export([start_link/1]).
+-export([start_link/0, create_session/1]).
 
 % Callback
 
@@ -18,24 +18,29 @@
 % API
 
 %% @doc Short description.
--spec start_link(term())->{ok,pid()}|ignore|{error,any()}.
-start_link(Args) ->
-  supervisor:start_link(?MODULE, Args).
-
+% -spec start_link(term())->{ok,pid()}|ignore|{error,any()}.
+start_link() ->
+  % supervisor:start_link({local, ?MODULE}, ?MODULE, Args).
+  supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 % runs in the context of acceptor
 create_session(Socket) ->
   {ok, Child} = supervisor:start_child(?MODULE, [Socket]),
-  {ok, _} = gen_tcp:controlling_process(Socket, Child),
+  case gen_tcp:controlling_process(Socket, Child) of
+    ok -> ok;
+    {error, Reason} ->
+      error_logger:info_msg("controlling_process failed with ~p ~n", Reason),
+      {error, Reason}
+  end,
   {ok, Child}.
 
 % Callback
 
-init(Args) ->
-  [Socket] = Args,
+init(_Args) ->
+  % [Socket] = Args,
 
   ChildSpec = {nexchange_fixsession
-       , {nexchange_fixsession, start_link, [Socket]}
+       , {nexchange_fixsession, start_link, []}
        , temporary
        , 200 % ms
        , worker
