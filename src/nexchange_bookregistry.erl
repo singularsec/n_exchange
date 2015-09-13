@@ -1,10 +1,11 @@
 
 -module(nexchange_bookregistry).
+
 -behaviour(gen_server).
 
 % API
 
--export([start_link/0]).
+-export([start_link/0, send_to_book/2]).
 
 % Callback
 
@@ -14,6 +15,14 @@
 % -record(state, { dict }).
 
 % API
+
+send_to_book(Symbol, Message) ->
+  BookPid = gen_server:call(nexchange_bookregistry, {get_or_create_book, Symbol}, 1000),
+  case BookPid of
+    BookPid when is_pid(BookPid) ->
+      gen_server:call(BookPid, Message);
+    _ -> {error, book_registry_error, BookPid}
+  end.
 
 % -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
 start_link() ->
@@ -29,6 +38,7 @@ handle_call({get_or_create_book, Symbol}, _From, State) ->
   {Pid, NewState} = case dict:is_key(Symbol, State) of
     true ->
       [RegPid] = dict:fetch(Symbol, State),
+      % TODO: process_info/2 to check if PID is alive?
       {RegPid, State};
     false ->
       {ok, Child} = nexchange_trading_sup:create_book(Symbol),

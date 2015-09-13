@@ -23,25 +23,35 @@ on_accepted_socket(Socket) ->
 init(_Args) ->
   OnAcceptCallback = {?MODULE, on_accepted_socket},
 
+  ShutdownTime = 10000,
+
   TcpAcceptorSpec = {nexchange_acceptor_sup,
                       {nexchange_acceptor_sup, start_link, [ OnAcceptCallback ]},
-                      permanent, 10000, supervisor, [nexchange_acceptor_sup]},
+                      permanent, ShutdownTime, supervisor, [nexchange_acceptor_sup]},
 
   FixSupSpec      = {nexchange_fixsession_sup,
                       {nexchange_fixsession_sup, start_link, []},
-                      permanent, 10000, supervisor, [nexchange_fixsession_sup]},
+                      permanent, ShutdownTime, supervisor, [nexchange_fixsession_sup]},
 
   TradingSupSpec  = {nexchange_trading_sup,
                       {nexchange_trading_sup, start_link, []},
-                      permanent, 10000, supervisor, [nexchange_trading_sup]},
+                      permanent, ShutdownTime, supervisor, [nexchange_trading_sup]},
 
-  BookRegistrySupSpec = {nexchange_bookregistry_sup,
-                      {nexchange_bookregistry_sup, start_link, []},
-                      permanent, 10000, supervisor, [nexchange_bookregistry_sup]},
+  BookRegistrySpec = {nexchange_bookregistry,
+                      {nexchange_bookregistry, start_link, []},
+                      permanent, ShutdownTime, worker, [nexchange_bookregistry]},
+
+  SessionRegistrySpec = {nexchange_sessionregistry,
+                      {nexchange_sessionregistry, start_link, []},
+                      permanent, ShutdownTime, worker, [nexchange_sessionregistry]},
 
   MaxRestart = 6,
   MaxTime = 3000,
 
-  Specs = [BookRegistrySupSpec, FixSupSpec, TcpAcceptorSpec, TradingSupSpec],
+  Specs = [SessionRegistrySpec,
+           BookRegistrySpec,
+           FixSupSpec,
+           TcpAcceptorSpec,
+           TradingSupSpec],
 
   {ok, {{one_for_one, MaxRestart, MaxTime}, Specs}}.

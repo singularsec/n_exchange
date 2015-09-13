@@ -25,6 +25,8 @@ handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = Sta
 
   % send to registered book
 
+  % nexchange_bookregistry:send_to_book(Symbol, Message)
+
   handle_messages(Messages, Rest, State);
 
 
