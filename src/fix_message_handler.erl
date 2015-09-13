@@ -37,15 +37,20 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
   % },
   ?DBG("logon ~p", [Logon#logon.fields, fix:dump(Bin)]),
 
-  NewState = send(logon, [{encrypt_method,0},{heart_bt_int,Logon#logon.heart_bt_int}], Logon#logon.fields, State),
+  NewState = send(logon,
+                  [ {reset_seq_num_flag, "Y"},
+                    {encrypt_method,0},
+                    {heart_bt_int, Logon#logon.heart_bt_int} ],
+                  Logon#logon.fields, State),
+
   handle_messages(Messages, Rest, NewState#state{authenticated=true});
 
 
-handle_messages([{#logout{} = Logout,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("logout ~p", Logout#logout.fields),
+handle_messages([{#logout{} = Logout,_}|_], _, #state{} = State) ->
+  ?DBG("logout ~p", Logout),
+
   % kill this process
-  exit(normal),
-  handle_messages(Messages, Rest, State#state{authenticated=false});
+  {stop, normal, State};
 
 
 handle_messages([{Msg,_Bin}|Messages], Rest, #state{} = State) ->
