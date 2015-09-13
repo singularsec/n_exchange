@@ -10,9 +10,12 @@
 
 -include("../include/secexchange.hrl").
 
-create() ->
-  BuysT  = ets:new(buys,  [ordered_set, {keypos, #order.oid}]),
-  SellsT = ets:new(sells, [ordered_set, {keypos, #order.oid}]),
+create(Symbol) ->
+  BuyTName  = list_to_atom( atom_to_list(buy)  ++ "_" ++ Symbol ),
+  SellTName = list_to_atom( atom_to_list(sell) ++ "_" ++ Symbol ),
+
+  BuysT  = ets:new(BuyTName,  [ordered_set, {keypos, #order.oid}]),
+  SellsT = ets:new(SellTName, [ordered_set, {keypos, #order.oid}]),
   Book   = #book{buys=BuysT, sells=SellsT},
   Book.
 
@@ -26,7 +29,7 @@ create() ->
 match_sell_order(#order{} = Order, Book) ->
   % if is valid
   % notify_accepted()
-  
+
   SellOrder = insert_sell(Order, Book),
   Collector = fun (Item, {Selected, QtdToFill, DesiredPrice} ) ->
     if
@@ -43,6 +46,7 @@ match_sell_order(#order{} = Order, Book) ->
   end,
   Result = list_buys(Book, Collector, {[], SellOrder#order.qtd, SellOrder#order.price}),
   Result.
+
 
 match_buy_order(#order{} = Order, Book) ->
   % BuyOrder = insert_buy(Order, Book),

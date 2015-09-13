@@ -35,9 +35,13 @@ init(_Args) ->
                       {nexchange_trading_sup, start_link, []},
                       permanent, 10000, supervisor, [nexchange_trading_sup]},
 
+  BookRegistrySupSpec = {nexchange_bookregistry_sup,
+                      {nexchange_bookregistry_sup, start_link, []},
+                      permanent, 10000, supervisor, [nexchange_bookregistry_sup]},
+
   MaxRestart = 6,
   MaxTime = 3000,
 
-  Specs = [FixSupSpec, TcpAcceptorSpec, TradingSupSpec],
+  Specs = [BookRegistrySupSpec, FixSupSpec, TcpAcceptorSpec, TradingSupSpec],
 
   {ok, {{one_for_one, MaxRestart, MaxTime}, Specs}}.

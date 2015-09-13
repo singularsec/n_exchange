@@ -1,36 +1,40 @@
-%%% @doc One line blurb.
-%%%
 
--module(nexchange_trading_book).
-
+-module(nexchange_bookregistry).
 -behaviour(gen_server).
 
 % API
 
--export([start_link/1]).
+-export([start_link/0]).
 
 % Callback
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--record(state, { book }).
-
+% -record(state, { dict }).
 
 % API
 
 % -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
-start_link(Symbol) ->
-  BookName = list_to_atom( atom_to_list(?MODULE) ++ "_" ++ Symbol ),
-  gen_server:start_link({local, BookName}, ?MODULE, Symbol, []).
-
+start_link() ->
+  gen_server:start_link({local,?MODULE}, ?MODULE, [], []).
 
 % Callback
 
-init(Symbol) ->
-  Book = nexchange_book:create(Symbol),
-  State = #state{book = Book},
-  {ok, State}.
+init(_Args) ->
+    State = dict:new(),
+    {ok, State}.
+
+handle_call({get_or_create_book, Symbol}, _From, State) ->
+  {Pid, NewState} = case dict:is_key(Symbol, State) of
+    true ->
+      [RegPid] = dict:fetch(Symbol, State),
+      {RegPid, State};
+    false ->
+      {ok, Child} = nexchange_trading_sup:create_book(Symbol),
+      {Child, dict:append(Symbol, Child, State)}
+  end,
+	{reply, Pid, NewState};
 
 handle_call(_Request, _From, State) ->
   % TODO: support for ops: buy/sell/etc

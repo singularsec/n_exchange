@@ -8,6 +8,26 @@
 -include("../include/business44.hrl").
 
 
+% {new_order_single, <<"20150913-06:31:21.719">>,  <<"x1">>,undefined,
+%    undefined,    undefined,   undefined,   <<"xxx1">>,
+%    undefined,   undefined,   undefined,   undefined,    undefined,   undefined,   undefined,   undefined,
+%    undefined,   undefined,   undefined,   undefined,    undefined,   undefined,   undefined,   undefined,
+%    undefined,buy,   undefined,   <<"20150913-03:28:51.345">>,
+%    undefined,limit,   undefined, undefined,    undefined,    undefined,    undefined,
+%    undefined,   undefined,   undefined,   undefined,    undefined,   undefined,   undefined,   undefined,
+%    undefined,   undefined,   undefined,   undefined,   undefined,   undefined,   undefined,   undefined,
+%    undefined,   undefined,   undefined,   undefined,   undefined,   undefined,   undefined,    undefined,
+%    undefined,   undefined,   undefined,   undefined, undefined,[],[],[], [
+%    {msg_seq_num,9},  {sender_comp_id, <<"INIT">>}, {target_comp_id, <<"ACCEPT">>}, {order_qty,10}, {symbol,<<"PETR4">>}]}]
+
+handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = State) ->
+  ?DBG("new_order_single ~p", Order),
+
+  % send to registered book
+
+  handle_messages(Messages, Rest, State);
+
+
 handle_messages([{#heartbeat{} = Hb,_}|Messages], Rest, #state{} = State) ->
   ?DBG("heartbeat ~p", Hb#heartbeat.fields),
 
@@ -60,6 +80,7 @@ handle_messages([{Msg,_Bin}|Messages], Rest, #state{} = State) ->
 
 handle_messages([], Rest, State) ->
   {noreply, State#state{prevbuffer=Rest}}.
+
 
 
 send(MsgType, Body, Fields, #state{socket=Socket, our_seq=Seq} = State) ->

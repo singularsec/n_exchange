@@ -8,7 +8,7 @@
 
 % API
 
--export([start_link/0]).
+-export([start_link/0, create_book/1]).
 
 % Callback
 
@@ -24,8 +24,7 @@ start_link() ->
 
 % creates a book for a symbol
 create_book(Symbol) ->
-  supervisor:start_child(?MODULE, [Symbol]),
-  ok.
+  supervisor:start_child(?MODULE, [Symbol]).
 
 % Callback
 
