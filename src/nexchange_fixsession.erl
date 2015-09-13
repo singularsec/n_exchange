@@ -30,7 +30,11 @@ start_link(Socket) ->
 
 init(Socket) ->
   EmptyBuffer = <<>>,
-  State = #state{socket=Socket, seq=0, authenticated=false, prevbuffer=EmptyBuffer},
+  State = #state{socket=Socket,
+                 their_seq=1,
+                 our_seq=1,
+                 authenticated=false,
+                 prevbuffer=EmptyBuffer},
   {ok, State}.
 
 handle_call(_Request, _From, State) ->

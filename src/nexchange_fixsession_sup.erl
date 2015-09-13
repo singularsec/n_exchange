@@ -26,12 +26,7 @@ start_link() ->
 % runs in the context of acceptor
 create_session(Socket) ->
   {ok, Child} = supervisor:start_child(?MODULE, [Socket]),
-  case gen_tcp:controlling_process(Socket, Child) of
-    ok -> ok;
-    {error, Reason} ->
-      error_logger:info_msg("controlling_process failed with ~p ~n", Reason),
-      {error, Reason}
-  end,
+  ok = gen_tcp:controlling_process(Socket, Child),
   {ok, Child}.
 
 % Callback
