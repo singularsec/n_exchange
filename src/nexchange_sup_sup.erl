@@ -6,8 +6,9 @@
 -export([init/1]).
 
 start_link() ->
-  supervisor:start_link({local, ?MODULE}, ?MODULE, []).
-
+  {ok, Pid} = supervisor:start_link({local, ?MODULE}, ?MODULE, []),
+  ok = nexchange_fixsession_eventmgr:setup_handlers(),
+  {ok, Pid}.
 
 % runs in the context of nexchange_acceptor_sup so it's safe to transfer ownership of socket
 on_accepted_socket(Socket) ->
