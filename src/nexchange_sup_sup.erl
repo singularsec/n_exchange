@@ -25,6 +25,10 @@ init(_Args) ->
 
   ShutdownTime = 10000,
 
+  FixSessionEventMgr = {nexchange_fixsession_eventmgr,
+                      {gen_event, start_link, [{local, nexchange_fixsession_eventmgr}]},
+                      permanent, ShutdownTime, worker, [dynamic]},
+
   TcpAcceptorSpec = {nexchange_acceptor_sup,
                       {nexchange_acceptor_sup, start_link, [ OnAcceptCallback ]},
                       permanent, ShutdownTime, supervisor, [nexchange_acceptor_sup]},
@@ -48,7 +52,8 @@ init(_Args) ->
   MaxRestart = 6,
   MaxTime = 3000,
 
-  Specs = [SessionRegistrySpec,
+  Specs = [FixSessionEventMgr,
+           SessionRegistrySpec,
            BookRegistrySpec,
            FixSupSpec,
            TcpAcceptorSpec,

@@ -74,7 +74,9 @@ handle_info(_Info, State) ->
 	{stop, unimplemented, State}.
 
 
-terminate(_Reason, State) ->
+terminate(_Reason, #state{sessionid=Sender} = State) ->
+  nexchange_fixsession_eventmgr:notify_session_terminated(Sender, self()),
+
 	{ok, State}.
 
 code_change(_OldVsn, State, _Extra) ->

@@ -13,15 +13,18 @@
 
 % API
 
+-spec register_fixsession(any(), pid()) -> ok.
 register_fixsession(SessionId, Pid) when is_pid(Pid) ->
   gen_server:cast(nexchange_sessionregistry, {register, SessionId, Pid}).
 
+-spec unregister_fixsession(any(), pid()) -> ok.
 unregister_fixsession(SessionId, Pid) when is_pid(Pid) ->
   gen_server:cast(nexchange_sessionregistry, {unregister, SessionId, Pid}).
 
+-spec get_fixsessions(any()) -> [pid()].
 get_fixsessions(SessionId) ->
-  Pid = gen_server:call(nexchange_sessionregistry, {get_sessions, SessionId}, 1000),
-  Pid.
+  Pids = gen_server:call(nexchange_sessionregistry, {get_sessions, SessionId}, 1000),
+  Pids.
 
 
 % -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.

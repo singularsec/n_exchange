@@ -65,7 +65,11 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
                     {heart_bt_int, Logon#logon.heart_bt_int} ],
                   Logon#logon.fields, State),
 
-  handle_messages(Messages, Rest, NewState#state{authenticated=true});
+  Sender = proplists:get_value(sender_comp_id, Logon#logon.fields),
+
+  nexchange_fixsession_eventmgr:notify_session_authenticated(Sender, self()),
+
+  handle_messages(Messages, Rest, NewState#state{authenticated=true, sessionid=Sender});
 
 
 handle_messages([{#logout{} = Logout,_}|_], _, #state{} = State) ->
