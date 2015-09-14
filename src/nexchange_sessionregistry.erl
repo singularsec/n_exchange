@@ -54,10 +54,10 @@ handle_cast({register, Session, Pid}, State) ->
   {noreply, NewDict};
 
 handle_cast({unregister, Session, Pid}, State) ->
-  NewDict = case dict:is_key(Session) of
+  NewDict = case dict:is_key(Session, State) of
     true ->
       Values = dict:fetch(Session, State),
-      NewList = lists:remove(Pid, Values),
+      NewList = lists:delete(Pid, Values),
       dict:store(Session, NewList, State);
     false -> State
   end,

@@ -8,6 +8,7 @@
 start_link() ->
   {ok, Pid} = supervisor:start_link({local, ?MODULE}, ?MODULE, []),
   ok = nexchange_fixsession_eventmgr:setup_handlers(),
+  ok = nexchange_trading_book_eventmgr:setup_handlers(),
   {ok, Pid}.
 
 % runs in the context of nexchange_acceptor_sup so it's safe to transfer ownership of socket
@@ -28,6 +29,10 @@ init(_Args) ->
 
   FixSessionEventMgr = {nexchange_fixsession_eventmgr,
                       {gen_event, start_link, [{local, nexchange_fixsession_eventmgr}]},
+                      permanent, ShutdownTime, worker, [dynamic]},
+
+  BookEventMgr = {nexchange_trading_book_eventmgr,
+                      {gen_event, start_link, [{local, nexchange_trading_book_eventmgr}]},
                       permanent, ShutdownTime, worker, [dynamic]},
 
   TcpAcceptorSpec = {nexchange_acceptor_sup,
@@ -54,6 +59,7 @@ init(_Args) ->
   MaxTime = 3000,
 
   Specs = [FixSessionEventMgr,
+           BookEventMgr,
            SessionRegistrySpec,
            BookRegistrySpec,
            FixSupSpec,
