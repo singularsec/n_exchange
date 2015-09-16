@@ -12,6 +12,6 @@
 
 exec_report_builder_test() ->
   % build_exec_report(_ExecType, Seq, Target, Sender)
-  ExecReport = exec_report:build_exec_report(1, 1, "target", "sender"),
+  % ExecReport = exec_report:build_exec_report(1, 1, "target", "sender"),
 
-  .
+  ok.

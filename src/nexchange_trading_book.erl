@@ -14,8 +14,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--record(state, { book }).
-
+-record(state, { book, symbol }).
 
 % API
 
@@ -29,7 +28,7 @@ start_link(Symbol) ->
 
 init(Symbol) ->
   Book = nexchange_book:create(Symbol),
-  State = #state{book = Book},
+  State = #state{book = Book, symbol = Symbol},
   {ok, State}.
 
 handle_call(_Request, _From, State) ->
@@ -43,7 +42,9 @@ handle_cast(_Request, State) ->
 handle_info(_Info, State) ->
 	{stop, unimplemented, State}.
 
-terminate(_Reason, State) ->
+terminate(_Reason, #state{symbol = Symbol} = State) ->
+  % unregister this pid so we dont keep a zombie one
+  nexchange_bookregistry:book_removed(Symbol, self()),
 	{ok, State}.
 
 code_change(_OldVsn, State, _Extra) ->

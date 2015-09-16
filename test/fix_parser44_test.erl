@@ -1,5 +1,5 @@
 
--module(fix_parser44_tests).
+-module(fix_parser44_test).
 
 -compile(export_all).
 

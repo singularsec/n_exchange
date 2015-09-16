@@ -29,14 +29,14 @@ create_book(Symbol) ->
 % Callback
 
 init(_Args) ->
-    Restart = {simple_one_for_one, 2, 5},
+  Restart = {simple_one_for_one, 2, 5},
 
-    ChildSpec = { nexchange_trading_book
-         , {nexchange_trading_book,start_link,[]}
-         , permanent
-         , 200 % ms
-         , worker
-         , [nexchange_trading_book]
-         },
+  ChildSpec = { nexchange_trading_book
+       , {nexchange_trading_book,start_link,[]}
+       , permanent
+       , 200 % ms
+       , worker
+       , [nexchange_trading_book]
+       },
 
-    {ok, {Restart,[ChildSpec]}}.
+  {ok, {Restart,[ChildSpec]}}.
