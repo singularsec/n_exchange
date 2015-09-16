@@ -41,10 +41,13 @@ register_and_unregister({_Pid,_SupId}) ->
   Keys = nexchange_bookregistry:get_registered(),
   [?_assertEqual(0, length(Keys))].
 
+
+
+% ---- Setup / teardown
+
 start() ->
    {ok, SupPid} = nexchange_trading_sup:start_link(),
    {ok, Pid} = nexchange_bookregistry:start_link(),
-   %  error_logger:info_msg("Started with ~p ~n", [self(), Pid, SupPid]),
    {Pid, SupPid}.
 
 stop({_Pid, SupPid}) ->

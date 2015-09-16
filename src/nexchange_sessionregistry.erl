@@ -4,7 +4,8 @@
 
 % API
 
--export([start_link/0, register_fixsession/2, unregister_fixsession/2, get_fixsessions/1]).
+-export([start_link/0, stop/0, register_fixsession/2, unregister_fixsession/2,
+         get_fixsessions/1, get_registered/0]).
 
 % Callback
 
@@ -15,34 +16,47 @@
 
 -spec register_fixsession(any(), pid()) -> ok.
 register_fixsession(SessionId, Pid) when is_pid(Pid) ->
-  gen_server:cast(nexchange_sessionregistry, {register, SessionId, Pid}).
+  gen_server:cast(?MODULE, {register, SessionId, Pid}).
 
 -spec unregister_fixsession(any(), pid()) -> ok.
 unregister_fixsession(SessionId, Pid) when is_pid(Pid) ->
-  gen_server:cast(nexchange_sessionregistry, {unregister, SessionId, Pid}).
+  gen_server:cast(?MODULE, {unregister, SessionId, Pid}).
 
 -spec get_fixsessions(any()) -> [pid()].
 get_fixsessions(SessionId) ->
-  Pids = gen_server:call(nexchange_sessionregistry, {get_sessions, SessionId}, 1000),
+  Pids = gen_server:call(?MODULE, {get_sessions, SessionId}, 1000),
   Pids.
+
+get_registered() ->
+  gen_server:call(?MODULE, get_registered).
 
 
 % -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
 start_link() ->
   gen_server:start_link({local,?MODULE}, ?MODULE, [], []).
 
+stop() ->
+  gen_server:call(?MODULE, stop).
+
 % Callback
 
 init(_Args) ->
-    State = dict:new(),
-    {ok, State}.
+  State = dict:new(),
+  {ok, State}.
+
+handle_call(stop, _From, State) ->
+  {stop, normal, State};
+
+handle_call(get_registered, _From, State) ->
+  Keys = dict:fetch_keys(State),
+  {reply, Keys, State};
 
 handle_call({get_sessions, SessionId}, _From, State) ->
   Sessions = case dict:is_key(SessionId, State) of
     true ->
       % TODO: process_info/2 to check if PID is alive?
       dict:fetch(SessionId, State);
-    false -> {[], State}
+    false -> []
   end,
 	{reply, Sessions, State};
 
@@ -58,7 +72,10 @@ handle_cast({unregister, Session, Pid}, State) ->
     true ->
       Values = dict:fetch(Session, State),
       NewList = lists:delete(Pid, Values),
-      dict:store(Session, NewList, State);
+      case length(NewList) of
+        0 -> dict:erase(Session, State);
+        _ -> dict:store(Session, NewList, State)
+      end;
     false -> State
   end,
   {noreply, NewDict};
