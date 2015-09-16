@@ -6,6 +6,7 @@
 -include("../include/fix_session.hrl").
 -include("../include/admin44.hrl").
 -include("../include/business44.hrl").
+-include("../include/secexchange.hrl").
 
 % http://www.bmfbovespa.com.br/en-us/services/trading-platforms/puma-trading-system/EntryPoint-quick-reference.asp
 
@@ -19,10 +20,10 @@
 %    undefined,   undefined,   undefined,   undefined,   undefined,   undefined,   undefined,   undefined,
 %    undefined,   undefined,   undefined,   undefined,   undefined,   undefined,   undefined,    undefined,
 %    undefined,   undefined,   undefined,   undefined, undefined,[],[],[], [
-%    {msg_seq_num,9},  {sender_comp_id, <<"INIT">>}, {target_comp_id, <<"ACCEPT">>}, {order_qty,10}, {symbol,<<"PETR4">>}]}]
+%    {msg_seq_num,9},  {sender_comp_id, <<"INIT">>}, {target_comp_id, <<"ACCEPT">>},
+%    {order_qty,10}, {symbol,<<"PETR4">>}]}]
 
 % new order single
-%   8=FIX.4.4 | 9=209 | 35=D | 34=4325 | 49=CCLRA300 | 52=20150909-20:09:49.532 | 56=OE101 |
 %    1=6216 |                <---- Account
 %    11=49803_0 |            <---- ClOrdID
 %    38=100 |                <---- OrderQty
@@ -43,32 +44,51 @@
 %      447=D |                 <---- PartyIDSource
 %      452=54 |                <---- CUSTOM sender location
 
-% Party roles
-% 4 - CLEARING FIRM
-% 5 - INVESTOR ID
-% 7 - ENTERING FIRM
-% 12 - EXECUTING TRADER
-% 17 - CONTRA FIRM
-% 28 - CUSTODIAN
-% 36 - ENTERING TRADER
-% 46 - FOREIGN FIRM
-% 54 - SENDER LOCATION
-% 55 - SESSION ID
-% 76 - DESK ID
-% 99 - ORIGINATING MARKET
-% 1001 - ORDER ORIGINATION SESSION
-% 1002 - MARKET SUPERVISOR ID
-% 1003 - CUSTODY ACCOUNT
-% 1004 - CUSTODY ALLOCATION TYPE
-handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("new_order_single ~p", Order),
-
-  % send to registered book
-
-  % nexchange_bookregistry:send_to_book(Symbol, Message)
+handle_new_order_single(#new_order_single{} = Order, false, Messages, Rest, #state{} = State) ->
+  % TODO: send reject due to invalid/not supported order type
+  Fields = Order#new_order_single.fields,
 
   handle_messages(Messages, Rest, State);
 
+handle_new_order_single(#new_order_single{} = Order, true, Messages, Rest, #state{} = State) ->
+  % [ {msg_seq_num,9}, {sender_comp_id, <<"INIT">>},
+  % {target_comp_id, <<"ACCEPT">>}, {order_qty,10}, {symbol,<<"PETR4">>}]
+  Fields = Order#new_order_single.fields,
+
+  _NewOrder = #order{
+    to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+    from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
+    id          = integer_to_list( erlang:unique_integer([positive]) ),
+    symbol      = binary_to_list( proplists:get_value(symbol, Fields) ),
+    qtd         = proplists:get_value(order_qty, Fields),
+    side        = Order#new_order_single.side,
+    price       = Order#new_order_single.price,
+    stop_price  = Order#new_order_single.stop_px,
+    price_type  = Order#new_order_single.price_type,
+    time        = Order#new_order_single.sending_time,
+    timeinforce = Order#new_order_single.time_in_force,
+    expirationt = Order#new_order_single.expire_time,
+    expirationd = Order#new_order_single.expire_date,
+    account     = Order#new_order_single.account,
+    cl_ord_id   = Order#new_order_single.cl_ord_id
+  },
+
+  % send to registered book
+  % nexchange_bookregistry:send_to_book(Symbol, Message)
+  handle_messages(Messages, Rest, State).
+
+handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = State) ->
+  ?DBG("new_order_single ~p", Order),
+
+  IsOrderValid = case Order#new_order_single.ord_type of
+    market -> true;
+    limit -> true;
+    stop -> true;
+    stoplimit -> true;
+    marketwithleftoverlimit -> true;
+    _ -> false
+  end,
+  handle_new_order_single(Order, IsOrderValid, Messages, Rest, State);
 
 handle_messages([{#heartbeat{} = Hb,_}|Messages], Rest, #state{} = State) ->
   ?DBG("heartbeat ~p", Hb#heartbeat.fields),
