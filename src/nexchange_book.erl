@@ -10,6 +10,11 @@
 
 -include("../include/secexchange.hrl").
 
+
+
+
+
+
 create(Symbol) ->
   BuyTName  = list_to_atom( atom_to_list(buy)  ++ "_" ++ Symbol ),
   SellTName = list_to_atom( atom_to_list(sell) ++ "_" ++ Symbol ),
@@ -27,6 +32,11 @@ create(Symbol) ->
 
 
 match_order(#order{} = _Order, _Book) ->
+
+  % post match
+
+  nexchange_trading_book_eventmgr:notify_match(),
+
   ok.
 
 cancel_order(#order{} = _Order, _Book) ->
@@ -34,6 +44,7 @@ cancel_order(#order{} = _Order, _Book) ->
 
 change_order(#order{} = _Order, _Book) ->
   ok.
+
 
 match_sell_order(#order{} = Order, Book) ->
   % if is valid
@@ -117,4 +128,6 @@ normalize_price(Price) ->
   % remove 4 decimals by multipling by 10000
   round(Price * 10000). % round converts it back to integer
 
-% TODO: cancel, replace, change
+
+
+%

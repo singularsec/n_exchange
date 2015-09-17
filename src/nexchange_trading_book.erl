@@ -50,15 +50,15 @@ handle_call(ping, _From, State) ->
 handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.
 
-handle_cast({new_order_single, #order{} = Order}, #state{book = Book} = State) ->
+handle_cast({new_order_single, #order{} = Order}, #state{book=Book} = State) ->
   nexchange_book:match_order(Order, Book),
 	{noreply, State};
 
-handle_cast({change_order, #order{} = Order}, #state{book = Book} = State) ->
+handle_cast({change_order, #order{} = Order}, #state{book=Book} = State) ->
   nexchange_book:change_order(Order, Book),
   {noreply, State};
 
-handle_cast({cancel_order, #order{} = Order}, #state{book = Book} = State) ->
+handle_cast({cancel_order, #order{} = Order}, #state{book=Book} = State) ->
   nexchange_book:cancel_order(Order, Book),
   {noreply, State};
 

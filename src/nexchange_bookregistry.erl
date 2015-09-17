@@ -5,33 +5,26 @@
 
 % API
 
--export([start_link/0, stop/0, get_book/1, send_to_book/2, book_removed/2, get_registered/0]).
+-export([start_link/0, stop/0, get_book/1, book_removed/2, get_registered/0]).
 
 % Callback
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
-% -record(state, { dict }).
 
 % API
 
-% -spec(get_book) -> pid()
+-spec get_book(any()) -> pid() | {error, any()}.
 get_book(Symbol) ->
   BookPid = gen_server:call(?MODULE, {get_or_create_book, Symbol}), %, 1000),
   BookPid.
 
-send_to_book(Symbol, Message) ->
-  BookPid = get_book(Symbol),
-  case BookPid of
-    BookPid when is_pid(BookPid) ->
-      gen_server:call(BookPid, Message);
-    _ -> {error, book_registry_error, BookPid}
-  end.
-
+-spec get_registered() -> ok | {error, any()}.
 get_registered() ->
   gen_server:call(?MODULE, get_books).
 
+-spec book_removed(any(), pid()) -> ok | {error, any()}.
 book_removed(Symbol, Pid) ->
   gen_server:cast(?MODULE, {book_removed, Symbol, Pid}).
 

@@ -8,8 +8,6 @@
 -include("../include/business44.hrl").
 -include("../include/secexchange.hrl").
 
-
-
 % {new_order_single, <<"20150913-06:31:21.719">>,  <<"x1">>,undefined,
 %    undefined,    undefined,   undefined,   <<"xxx1">>,
 %    undefined,   undefined,   undefined,   undefined,    undefined,   undefined,   undefined,   undefined,
@@ -44,7 +42,6 @@
 %      447=D |                 <---- PartyIDSource
 %      452=54 |                <---- CUSTOM sender location
 
-
 handle_new_order_single(#new_order_single{} = Order, Messages, Rest, #state{} = State) ->
   IsOrderValid = case Order#new_order_single.ord_type of
     market -> true;
@@ -56,19 +53,28 @@ handle_new_order_single(#new_order_single{} = Order, Messages, Rest, #state{} = 
   end,
   handle_new_order_single(Order, IsOrderValid, Messages, Rest, State).
 
+
 handle_new_order_single(#new_order_single{} = Order, false, Messages, Rest, #state{} = State) ->
   % TODO: send reject due to invalid/not supported order type
-  Fields = Order#new_order_single.fields,
-
   fix_message_handler:handle_messages(Messages, Rest, State);
 
 
 handle_new_order_single(#new_order_single{} = Order, true, Messages, Rest, #state{} = State) ->
   % [ {msg_seq_num,9}, {sender_comp_id, <<"INIT">>},
   % {target_comp_id, <<"ACCEPT">>}, {order_qty,10}, {symbol,<<"PETR4">>}]
+  NewOrder = order_from_new_order_single(Order),
+  % potential bottleneck here as it's a sync call
+  BookPid = nexchange_bookregistry:get_book(NewOrder#order.symbol),
+
+  nexchange_trading_book:send_new_order_single(BookPid, NewOrder),
+
+  fix_message_handler:handle_messages(Messages, Rest, State).
+
+
+order_from_new_order_single(#new_order_single{} = Order) ->
   Fields = Order#new_order_single.fields,
 
-  NewOrder = #order{
+  #order{
     to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
     from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
     id          = integer_to_list( erlang:unique_integer([positive]) ),
@@ -84,9 +90,4 @@ handle_new_order_single(#new_order_single{} = Order, true, Messages, Rest, #stat
     expirationd = Order#new_order_single.expire_date,
     account     = Order#new_order_single.account,
     cl_ord_id   = Order#new_order_single.cl_ord_id
-  },
-
-  % potential bottleneck here as it's a sync call
-  nexchange_bookregistry:send_to_book(NewOrder#order.symbol, NewOrder),
-
-  fix_message_handler:handle_messages(Messages, Rest, State).
+  }.
