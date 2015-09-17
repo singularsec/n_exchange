@@ -1,4 +1,4 @@
--module(nexchange_book).
+-module(n_orderbook).
 
 -ifdef(EUNIT).
 -compile(export_all).
@@ -23,7 +23,7 @@ create(Symbol) ->
 add_new_order_single(#order{} = Order, Book) ->
   SupportedOrderTypes = [ limit, market, stop, stoplimit, marketwithleftoverlimit ],
   IsValid = lists:member(Order#order.order_type, SupportedOrderTypes),
-  add_new_order_single(Order,Book,IsValid).
+  add_new_order_single(Order, Book, IsValid).
 
 add_new_order_single(#order{} = Order, _Book, false) ->
   send_reject(Order, "Unsupported order type: " ++ atom_to_list(Order#order.order_type) );

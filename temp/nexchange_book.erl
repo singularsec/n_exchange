@@ -69,7 +69,9 @@ insert_sell(#order{price = Price, time = _T, qtd = _Qtd, id = _Id} = Order,
             #book{sells = Sells}) ->
   NormalizedPrice = normalize_price(Price),
   {Key, Time} = sell_order_key(NormalizedPrice),
-  NewOrder = Order#order{oid = Key, time = Time, price=NormalizedPrice},
+  NewOrder = Order#order{oid = Key,
+                         time = Time,
+                         price = NormalizedPrice},
   ets:insert(Sells, NewOrder),
   NewOrder.
 

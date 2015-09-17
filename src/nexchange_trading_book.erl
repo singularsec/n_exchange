@@ -40,7 +40,7 @@ start_link(Symbol) ->
 % Callback
 
 init(Symbol) ->
-  Book = nexchange_book:create(Symbol),
+  Book = n_orderbook:create(Symbol),
   State = #state{book = Book, symbol = Symbol},
   {ok, State}.
 
@@ -51,15 +51,15 @@ handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.
 
 handle_cast({new_order_single, #order{} = Order}, #state{book=Book} = State) ->
-  nexchange_book:match_order(Order, Book),
+  n_orderbook:match_order(Order, Book),
 	{noreply, State};
 
 handle_cast({change_order, #order{} = Order}, #state{book=Book} = State) ->
-  nexchange_book:change_order(Order, Book),
+  n_orderbook:change_order(Order, Book),
   {noreply, State};
 
 handle_cast({cancel_order, #order{} = Order}, #state{book=Book} = State) ->
-  nexchange_book:cancel_order(Order, Book),
+  n_orderbook:cancel_order(Order, Book),
   {noreply, State};
 
 handle_cast(_Request, State) ->
