@@ -24,7 +24,8 @@ start_link() ->
 
 % creates a book for a symbol
 create_book(Symbol) ->
-  supervisor:start_child(?MODULE, [Symbol]).
+  {ok, Pid} = supervisor:start_child(?MODULE, [Symbol]),
+  Pid.
 
 % Callback
 

@@ -18,7 +18,7 @@
 
 % -spec(get_book) -> pid()
 get_book(Symbol) ->
-  BookPid = gen_server:call(?MODULE, {get_or_create_book, Symbol}, 1000),
+  BookPid = gen_server:call(?MODULE, {get_or_create_book, Symbol}), %, 1000),
   BookPid.
 
 send_to_book(Symbol, Message) ->
@@ -42,11 +42,12 @@ start_link() ->
 stop() ->
   gen_server:call(?MODULE, stop).
 
+
 % Callback
 
 init(_Args) ->
-    State = dict:new(),
-    {ok, State}.
+  State = dict:new(),
+  {ok, State}.
 
 handle_call(stop, _From, State) ->
   {stop, normal, State};
@@ -59,28 +60,29 @@ handle_call({get_or_create_book, Symbol}, _From, State) ->
   {Pid, NewState} = case dict:is_key(Symbol, State) of
     true ->
       [RegPid] = dict:fetch(Symbol, State),
-      % TODO: process_info/2 to check if PID is alive?
       {RegPid, State};
     false ->
-      {ok, Child} = nexchange_trading_sup:create_book(Symbol),
-      {Child, dict:append(Symbol, Child, State)}
+      Child = nexchange_trading_sup:create_book(Symbol),
+      NewS = dict:append(Symbol, Child, State),
+      {Child, NewS}
   end,
-	{reply, Pid, NewState};
+  {reply, Pid, NewState};
 
-handle_call(_Request, _From, State) ->
-  % TODO: support for ops: buy/sell/etc
+handle_call(Request, _From, State) ->
+  error_logger:info_msg("handle_call for ?? message ~p ~n", Request),
 	{stop, unimplemented, State}.
 
 handle_cast({book_removed, Symbol, _Pid}, State) ->
   NewState = dict:erase(Symbol, State),
   {noreply, NewState};
 
-handle_cast(_Request, State) ->
-  % TODO: support for ops: buy/sell/etc
+handle_cast(Request, State) ->
+  error_logger:info_msg("handle_cast for ?? message ~p ~n", Request),
 	{stop, unimplemented, State}.
 
 handle_info(_Info, State) ->
-	{stop, unimplemented, State}.
+	% {stop, unimplemented, State}.
+  {noreply, State}.
 
 terminate(_Reason, State) ->
 	{ok, State}.

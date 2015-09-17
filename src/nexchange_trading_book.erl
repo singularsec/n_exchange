@@ -1,13 +1,13 @@
-%%% @doc One line blurb.
-%%%
-
 -module(nexchange_trading_book).
 
 -behaviour(gen_server).
 
+-include("../include/secexchange.hrl").
+
 % API
 
 -export([start_link/1]).
+-export([ping/1, send_new_order_single/2, modify_order/2, cancel_order/2]).
 
 % Callback
 
@@ -17,6 +17,19 @@
 -record(state, { book, symbol }).
 
 % API
+
+ping(BookPid) when is_pid(BookPid) ->
+  gen_server:call(BookPid, ping).
+
+send_new_order_single(BookPid, #order{} = Order) when is_pid(BookPid) ->
+  gen_server:cast(BookPid, {new_order_single, Order}).
+
+modify_order(BookPid, #order{} = Order) when is_pid(BookPid) ->
+  gen_server:cast(BookPid, {change_order, Order}).
+
+cancel_order(BookPid, #order{} = Order) when is_pid(BookPid) ->
+  gen_server:cast(BookPid, {cancel_order, Order}).
+
 
 % -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
 start_link(Symbol) ->
@@ -31,9 +44,23 @@ init(Symbol) ->
   State = #state{book = Book, symbol = Symbol},
   {ok, State}.
 
+handle_call(ping, _From, State) ->
+	{reply, pong, State};
+
 handle_call(_Request, _From, State) ->
-  % TODO: support for ops: buy/sell/etc
 	{stop, unimplemented, State}.
+
+handle_cast({new_order_single, #order{} = Order}, #state{book = Book} = State) ->
+  nexchange_book:match_order(Order, Book),
+	{noreply, State};
+
+handle_cast({change_order, #order{} = Order}, #state{book = Book} = State) ->
+  nexchange_book:change_order(Order, Book),
+  {noreply, State};
+
+handle_cast({cancel_order, #order{} = Order}, #state{book = Book} = State) ->
+  nexchange_book:cancel_order(Order, Book),
+  {noreply, State};
 
 handle_cast(_Request, State) ->
   % TODO: support for ops: buy/sell/etc

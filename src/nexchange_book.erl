@@ -26,6 +26,15 @@ create(Symbol) ->
 %% TODO: market with leftover as limit
 
 
+match_order(#order{} = _Order, _Book) ->
+  ok.
+
+cancel_order(#order{} = _Order, _Book) ->
+  ok.
+
+change_order(#order{} = _Order, _Book) ->
+  ok.
+
 match_sell_order(#order{} = Order, Book) ->
   % if is valid
   % notify_accepted()
@@ -48,7 +57,7 @@ match_sell_order(#order{} = Order, Book) ->
   Result.
 
 
-match_buy_order(#order{} = Order, Book) ->
+match_buy_order(#order{} = _Order, _Book) ->
   % BuyOrder = insert_buy(Order, Book),
   ok.
 
