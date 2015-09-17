@@ -15,8 +15,8 @@ start_stop_test_() ->
    ?setup(fun is_event_manager_setup_correctly/1)}.
 
 market_price_match_for_sell_test_() ->
-  {"sell order, type: marker_price",
-   ?setup(fun market_price_match_order_sell_test/1)}.
+  {"sell order, type: limit",
+   ?setup(fun limit_price_match_order_sell_test/1)}.
 
 % ---- Actual tests
 
@@ -25,16 +25,16 @@ is_event_manager_setup_correctly(Pid) ->
    ?_assertEqual(Pid, whereis(nexchange_trading_book_eventmgr))].
 
 
-market_price_match_order_sell_test(EventMgrPid) ->
+limit_price_match_order_sell_test(EventMgrPid) ->
   Book = nexchange_book:create("PETR5"),
 
-  % prepare book
-  nexchange_book:insert_buy(#order{price=10, order_type=market, qtd=100, id="t1"}, Book),
-  nexchange_book:insert_buy(#order{price=10, order_type=market, qtd=100, id="t1"}, Book),
+  % Adds orders without matching
+  nexchange_book:insert_buy(#order{price=10, order_type=limit, qtd=100, side=buy, id="t1"}, Book),
+  nexchange_book:insert_buy(#order{price=10, order_type=limit, qtd=100, side=buy, id="t2"}, Book),
 
-  % nexchange_book:match_order(#order{  });
+  nexchange_book:match_order(#order{price=10, order_type=limit, qtd=10, side=sell, id="t3"}, Book),
 
-  nexchange_trading_book_eventmgr:notify_fill(#order{price=10}),
+  % nexchange_trading_book_eventmgr:notify_fill(#order{price=10}),
 
   All = gen_event:call(EventMgrPid, book_ev_handler, get_all),
 

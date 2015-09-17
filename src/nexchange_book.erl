@@ -31,12 +31,14 @@ create(Symbol) ->
 %% TODO: market with leftover as limit
 
 
-match_order(#order{} = _Order, _Book) ->
-
+match_order(#order{side=sell,order_type=limit} = _Order, _Book) ->
   % post match
-
   nexchange_trading_book_eventmgr:notify_match(),
+  ok.
 
+match_order(#order{side=buy,order_type=limit} = _Order, _Book) ->
+  % post match
+  nexchange_trading_book_eventmgr:notify_match(),
   ok.
 
 cancel_order(#order{} = _Order, _Book) ->
