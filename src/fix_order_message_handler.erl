@@ -43,23 +43,6 @@
 %      452=54 |                <---- CUSTOM sender location
 
 handle_new_order_single(#new_order_single{} = Order, Messages, Rest, #state{} = State) ->
-  IsOrderValid = case Order#new_order_single.ord_type of
-    market -> true;
-    limit -> true;
-    stop -> true;
-    stoplimit -> true;
-    marketwithleftoverlimit -> true;
-    _ -> false
-  end,
-  handle_new_order_single(Order, IsOrderValid, Messages, Rest, State).
-
-
-handle_new_order_single(#new_order_single{} = Order, false, Messages, Rest, #state{} = State) ->
-  % TODO: send reject due to invalid/not supported order type
-  fix_message_handler:handle_messages(Messages, Rest, State);
-
-
-handle_new_order_single(#new_order_single{} = Order, true, Messages, Rest, #state{} = State) ->
   % [ {msg_seq_num,9}, {sender_comp_id, <<"INIT">>},
   % {target_comp_id, <<"ACCEPT">>}, {order_qty,10}, {symbol,<<"PETR4">>}]
   NewOrder = order_from_new_order_single(Order),

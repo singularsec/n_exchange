@@ -2,7 +2,12 @@
 -record(order, {oid,  % used for sorting only!
                 symbol,
                 id,
+                
                 qtd,
+                qtd_filled,
+                qtd_left,
+                qtd_last,
+
                 price,
                 price_type,
                 time,
@@ -18,6 +23,8 @@
                 cl_ord_id
                 }).
 
--record(book,  {sells=[], buys=[], lasttrade=0}).
+-record(orderbook, {sells=[], buys=[], lasttrade=0}).
+
+-record(fillbook,  {sells=[], buys=[]}).
 
 -record(execreport, {}).

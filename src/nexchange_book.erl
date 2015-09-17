@@ -1,18 +1,14 @@
-
 -module(nexchange_book).
 
 -ifdef(EUNIT).
 -compile(export_all).
 -else.
--compile(export_all).
-% -export([create/0, match_sell_order/2, match_buy_order/2]).
+-export([create/1, add_new_order_single/2]).
 -endif.
 
 -include("../include/secexchange.hrl").
 
-
-
-
+-record(execplan, {selected=[], price=0, qtdleft}).
 
 
 create(Symbol) ->
@@ -21,39 +17,69 @@ create(Symbol) ->
 
   BuysT  = ets:new(BuyTName,  [ordered_set, {keypos, #order.oid}]),
   SellsT = ets:new(SellTName, [ordered_set, {keypos, #order.oid}]),
-  Book   = #book{buys=BuysT, sells=SellsT},
-  Book.
 
-%% TODO: market price with protection
-%% TODO: limit orders
-%% TODO: stop order with protection
-%% TODO: stop order limit
-%% TODO: market with leftover as limit
+  #orderbook{sells=SellsT, buys=BuysT, lasttrade=0}.
 
+add_new_order_single(#order{} = Order, Book) ->
+  SupportedOrderTypes = [ limit, market, stop, stoplimit, marketwithleftoverlimit ],
+  IsValid = lists:member(Order#order.order_type, SupportedOrderTypes),
+  add_new_order_single(Order,Book,IsValid).
 
-match_order(#order{side=sell,order_type=limit} = _Order, _Book) ->
-  % post match
-  nexchange_trading_book_eventmgr:notify_match(),
+add_new_order_single(#order{} = Order, _Book, false) ->
+  send_reject(Order, "Unsupported order type: " ++ atom_to_list(Order#order.order_type) );
+
+add_new_order_single(#order{} = Order, Book, true) ->
+  NewOrder = insert_order(Order, Book),
+
+  % day goodtillcancel
+  % immediateorcancel
+  % fillorkill
+  % goodtilldate
+  % attheclose
+  % goodforauction
+
   ok.
 
-match_order(#order{side=buy,order_type=limit} = _Order, _Book) ->
-  % post match
-  nexchange_trading_book_eventmgr:notify_match(),
+insert_order(#order{side=buy} = Order, Book) ->
+  Table = Book#orderbook.buys,
+  NewOrder = insert_order_into(Order, Table),
+  match_new_order(NewOrder, Book);
+
+insert_order(#order{side=sell} = Order, Book) ->
+  Table = Book#orderbook.sells,
+  NewOrder = insert_order_into(Order, Table),
+  match_new_order(NewOrder, Book);
+
+insert_order(#order{side=_OtherSide} = Order, Book) ->
+  send_reject(Order, "Unsupported order side: " ++ atom_to_list(_OtherSide) ),
+  false.
+
+insert_order_into(#order{price=Price, qtd=Qtd, side=Side} = Order, Table) ->
+  NormalizedPrice = normalize_price(Price),
+  {Key, Time} = compose_key(Price, Side),
+  NewOrder = Order#order{oid=Key,
+                         time=Time,
+                         qtd_filled=0, qtd_left=Qtd, qtd_last=0,
+                         price=NormalizedPrice},
+  ets:insert(Table, NewOrder),
+  send_accept(NewOrder),
+  NewOrder.
+
+
+% nothing to do
+match_new_order(false, _Book) -> ok;
+
+match_new_order(#order{side=Side,qtd=Qtd,order_type=market,timeinforce=TiF} = Order, Book) ->
+  OtherSideT = other_side(Side, Book),
+  Plan = create_matching_plan(OtherSideT, Side, 0, Qtd),
+  execute_plan_if_compatible_with_timeinforce(Plan);
+
+match_new_order(#order{side=Side,order_type=limit,timeinforce=TiF} = Order, Book) ->
   ok.
 
-cancel_order(#order{} = _Order, _Book) ->
-  ok.
-
-change_order(#order{} = _Order, _Book) ->
-  ok.
-
-
-match_sell_order(#order{} = Order, Book) ->
-  % if is valid
-  % notify_accepted()
-
-  SellOrder = insert_sell(Order, Book),
-  Collector = fun (Item, {Selected, QtdToFill, DesiredPrice} ) ->
+% traverse table of available orders selecting compatible orders.
+create_matching_plan(OrderT, Side, Price, QtdToFill) ->
+  Collector = fun (Item, #execplan{selected=Selected, qtdleft=QtdToFill, price=DesiredPrice} ) ->
     if
       QtdToFill =< 0 -> done;
       true ->
@@ -66,35 +92,12 @@ match_sell_order(#order{} = Order, Book) ->
         end
     end
   end,
-  Result = list_buys(Book, Collector, {[], SellOrder#order.qtd, SellOrder#order.price}),
-  Result.
+  traverse_ets_table(OrderT, nil, Collector, #execplan{price=Price, qtdleft=QtdToFill}).
 
-
-match_buy_order(#order{} = _Order, _Book) ->
-  % BuyOrder = insert_buy(Order, Book),
+execute_plan_if_compatible_with_timeinforce(Plan = #execplan{}) ->
   ok.
 
-insert_sell(#order{price = Price, time = _T, qtd = _Qtd, id = _Id} = Order,
-            #book{sells = Sells}) ->
-  NormalizedPrice = normalize_price(Price),
-  {Key, Time} = sell_order_key(NormalizedPrice),
-  NewOrder = Order#order{oid = Key, time = Time, price=NormalizedPrice},
-  ets:insert(Sells, NewOrder),
-  NewOrder.
 
-insert_buy(#order{price = Price, time = _T, qtd = _Qtd, id = _Id} = Order,
-            #book{buys = Buys}) ->
-  NormalizedPrice = normalize_price(Price),
-  {Key, Time} = buy_order_key(NormalizedPrice),
-  NewOrder = Order#order{oid = Key, time = Time, price=NormalizedPrice},
-  ets:insert(Buys, NewOrder),
-  NewOrder.
-
-list_sells(#book{sells = Sells}, Collector, State) ->
-  traverse_ets_table(Sells, nil, Collector, State).
-
-list_buys(#book{buys = Buys}, Collector, State) ->
-  traverse_ets_table(Buys, nil, Collector, State).
 
 traverse_ets_table(Table, Key, Collector, State) ->
   KeyToUse = case Key of
@@ -114,21 +117,51 @@ traverse_ets_table(Table, Key, Collector, State) ->
       end
   end.
 
+% ----- Events that generate Execution reports
+
+send_accept(#order{} = Order) ->
+  % nexchange_trading_book_eventmgr:notify_match(),
+  ok.
+
+send_reject(#order{} = Order, Reason) ->
+  % nexchange_trading_book_eventmgr:notify_match(),
+  ok.
+
+normalize_price(Price) when is_atom(Price) -> 0;
+normalize_price(Price) when is_number(Price) ->
+  % remove 4 decimals by multipling by 10000
+  round(Price * 10000). % round converts it back to integer
+
+
+% ----- Utility functions
+
+other_side(buy, #orderbook{sells=SellsT}) -> SellsT;
+other_side(sell, #orderbook{buys=BuysT}) -> BuysT.
+
+
 get_now() -> erlang:system_time(micro_seconds). % - 1441736774862944.
 
-sell_order_key(Price) ->
+compose_key(Price, sell) ->
   Now = get_now(),
   Res = (Price * 100000000000000000) + Now,
-  {Res, Now}.
+  {Res, Now};
 
-buy_order_key(Price) ->
+compose_key(Price, buy) ->
   Now = get_now(),
   Res = (Price * -100000000000000000) + Now,
   {Res, Now}.
 
-normalize_price(Price) ->
-  % remove 4 decimals by multipling by 10000
-  round(Price * 10000). % round converts it back to integer
+
+
+
+
+
+
+
+
+
+
+
 
 
 
