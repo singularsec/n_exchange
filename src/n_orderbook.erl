@@ -51,6 +51,7 @@ insert_order_into(#order{price=Price, qtd=Qtd, side=Side} = Order, Table) ->
   {Key, Time} = compose_key(Price, Side),
   NewOrder = Order#order{oid=Key,
                          time=Time,
+                         order_status=new,
                          qtd_filled=0, qtd_left=Qtd, qtd_last=0,
                          price=NormalizedPrice},
   ets:insert(Table, NewOrder),
@@ -87,21 +88,20 @@ create_matching_plan(OrderT, Side, Price, Qtd) ->
       if
         QtdToFill =< 0 -> done;
         true ->
-          if
-            apply_selection_criterion(Side, Item, DesiredPrice) ->
+          case apply_selection_criterion(Side, Item, DesiredPrice) of
+            true ->
               NewQtd = QtdToFill - min(Item#order.qtd_left, QtdToFill),
               State#execplan{selected=Selected ++ [Item], qtdleft=NewQtd};
-            true ->
-              State
+            false -> State
           end
       end
   end,
   traverse_ets_table(OrderT, nil, Collector, #execplan{selected=[], price=Price, qtdleft=Qtd}).
 
 apply_selection_criterion(buy, #order{price=Price, order_type=Type}, DesiredPrice)->
-  Item#order.price =< DesiredPrice;
+  Price =< DesiredPrice;
 apply_selection_criterion(sell, #order{price=Price, order_type=Type}, DesiredPrice)->
-  Item#order.price >= DesiredPrice.
+  Price >= DesiredPrice.
 
 % Fill Or Kill (FOK/All_or_nothing) orders (59 = 4) require that the full amount stated in the order is
 % executed upon entering the order book. If there is not enough quantity on the opposite
@@ -142,32 +142,82 @@ execute_plan_applying_timeinforce(Order,
     false -> complete_order(NewOrder, Book)
   end.
 
-execute_plan(Order, #execplan{selected=Orders, qtdleft=LeavesQtd} = Plan, Book) ->
-  ok.
+execute_plan(Order, #execplan{selected=Orders}, Book) ->
+  execute_plan(Order, Orders, Book);
+
+execute_plan(Order, [], _Book) ->
+  Order;
+
+execute_plan(#order{qtd_filled=Filled,qtd_left=LeavesQtd}=Order, [MatchedOrder|Rest], Book) ->
+  #order{qtd_left=AvailableQtd} = MatchedOrder,
+
+  HowMany = min(LeavesQtd, AvailableQtd),
+
+  NewMatchedOrder = decrement_qtd(HowMany, MatchedOrder),
+  NewOrder        = decrement_qtd(HowMany, Order),
+
+  update_state(NewMatchedOrder, Book),
+  update_state(NewOrder, Book),
+
+  execute_plan(Order, Rest, Book).
+
+% qtd, qtd_filled, qtd_left, qtd_last
+decrement_qtd(ByHowMany, #order{qtd=_Original, qtd_filled=Filled, qtd_left=LeavesQtd, qtd_last=Last}=Order) ->
+  % TODO: use Original to assert consistency
+  Order#order{qtd_filled=Filled + ByHowMany, qtd_left=LeavesQtd - ByHowMany, qtd_last=ByHowMany}.
+
 
 % ----- Changes order state + the ets tables
 
-partial_fill_order(_Order, _Book) ->
-  ok.
+update_state(#order{qtd_left=0} = Order, Book) ->
+  complete_order(Order, Book);
 
-complete_order(_Order, _Book) ->
-  ok.
+update_state(Order, Book) ->
+  partial_fill_order(Order, Book).
 
-reject_order(_Order, _Reason, _Book) ->
-  ok.
 
-cancel_order(_Order, _Reason, _Book) ->
-  ok.
+partial_fill_order(Order, Book) ->
+  replace_in_ets(Order, Book),
+  send_partial_fill_notification(Order),
+  Order.
+
+complete_order(#order{id=Key, side=Side} = Order, Book) ->
+  remove_from_ets(Order, Book),
+  send_filled_notification(Order, Book),
+  Order.
+
+reject_order(Order, _Reason, Book) ->
+  remove_from_ets(Order, Book),
+  Order.
+
+cancel_order(Order, _Reason, Book) ->
+  remove_from_ets(Order, Book),
+  Order.
+
+% ----- ets tables
+
+replace_in_ets(#order{id=Key, side=Side} = Order, Book) ->
+  true = ets:insert(get_table(Side, Book), Order).
+
+remove_from_ets(#order{id=Key, side=Side} = Order, Book) ->
+  true = ets:delete(get_table(Side, Book), Key).
 
 % ----- Events that generate Execution reports
 
-send_accept_notification(_Order) ->
-  % nexchange_trading_book_eventmgr:notify_match(),
-  ok.
+send_accept_notification(Order) ->
+  nexchange_trading_book_eventmgr:notify_accept(Order).
 
-send_reject_notification(_Order, _Reason) ->
-  % nexchange_trading_book_eventmgr:notify_match(),
-  ok.
+send_reject_notification(Order, Reason) ->
+  nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+
+send_cancel_notification(Order, Reason) ->
+  nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+
+send_filled_notification(Order) ->
+  nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+
+send_partial_fill_notification(Order) ->
+  nexchange_trading_book_eventmgr:notify_partial_fill(Order).
 
 normalize_price(Price) when is_atom(Price) -> 0;
 normalize_price(Price) when is_number(Price) ->
@@ -192,6 +242,9 @@ traverse_ets_table(Table, Key, Collector, State) ->
         true -> traverse_ets_table(Table, KeyToUse, Collector, NewState)
       end
   end.
+
+get_table(buy,  #orderbook{buys=BuysT})   -> BuysT;
+get_table(sell, #orderbook{sells=SellsT}) -> SellsT.
 
 other_side(buy, #orderbook{sells=SellsT}) -> SellsT;
 other_side(sell, #orderbook{buys=BuysT}) -> BuysT.
