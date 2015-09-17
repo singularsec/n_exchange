@@ -10,14 +10,13 @@
 
 -record(execplan, {selected=[], price=0, qtdleft}).
 
+% http://www.fixdeveloper.com/2014/05/fix-44-order-state-change-matrices.html
 
 create(Symbol) ->
   BuyTName  = list_to_atom( atom_to_list(buy)  ++ "_" ++ Symbol ),
   SellTName = list_to_atom( atom_to_list(sell) ++ "_" ++ Symbol ),
-
   BuysT  = ets:new(BuyTName,  [ordered_set, {keypos, #order.oid}]),
   SellsT = ets:new(SellTName, [ordered_set, {keypos, #order.oid}]),
-
   #orderbook{sells=SellsT, buys=BuysT, lasttrade=0}.
 
 add_new_order_single(#order{} = Order, Book) ->
@@ -26,20 +25,13 @@ add_new_order_single(#order{} = Order, Book) ->
   add_new_order_single(Order, Book, IsValid).
 
 add_new_order_single(#order{} = Order, _Book, false) ->
-  send_reject(Order, "Unsupported order type: " ++ atom_to_list(Order#order.order_type) );
+  send_reject_notification(Order, "Unsupported order type: " ++ atom_to_list(Order#order.order_type) );
 
 add_new_order_single(#order{} = Order, Book, true) ->
   NewOrder = insert_order(Order, Book),
+  NewOrder.
 
-  % day goodtillcancel
-  % immediateorcancel
-  % fillorkill
-  % goodtilldate
-  % attheclose
-  % goodforauction
-
-  ok.
-
+-spec insert_order('order', 'orderbook') -> 'order' | ok.
 insert_order(#order{side=buy} = Order, Book) ->
   Table = Book#orderbook.buys,
   NewOrder = insert_order_into(Order, Table),
@@ -51,7 +43,7 @@ insert_order(#order{side=sell} = Order, Book) ->
   match_new_order(NewOrder, Book);
 
 insert_order(#order{side=_OtherSide} = Order, Book) ->
-  send_reject(Order, "Unsupported order side: " ++ atom_to_list(_OtherSide) ),
+  send_reject_notification(Order, "Unsupported side: " ++ atom_to_list(_OtherSide) ),
   false.
 
 insert_order_into(#order{price=Price, qtd=Qtd, side=Side} = Order, Table) ->
@@ -62,9 +54,8 @@ insert_order_into(#order{price=Price, qtd=Qtd, side=Side} = Order, Table) ->
                          qtd_filled=0, qtd_left=Qtd, qtd_last=0,
                          price=NormalizedPrice},
   ets:insert(Table, NewOrder),
-  send_accept(NewOrder),
+  send_accept_notification(NewOrder),
   NewOrder.
-
 
 % nothing to do
 match_new_order(false, _Book) -> ok;
@@ -72,58 +63,109 @@ match_new_order(false, _Book) -> ok;
 match_new_order(#order{side=Side,qtd=Qtd,order_type=market,timeinforce=TiF} = Order, Book) ->
   OtherSideT = other_side(Side, Book),
   Plan = create_matching_plan(OtherSideT, Side, 0, Qtd),
-  execute_plan_if_compatible_with_timeinforce(Plan);
+  execute_plan_applying_timeinforce(Order, Plan, TiF, Book);
 
-match_new_order(#order{side=Side,order_type=limit,timeinforce=TiF} = Order, Book) ->
-  ok.
+match_new_order(#order{side=Side,qtd=Qtd,price=Price,order_type=limit,timeinforce=TiF} = Order, Book) ->
+  OtherSideT = other_side(Side, Book),
+  Plan = create_matching_plan(OtherSideT, Side, Price, Qtd),
+  execute_plan_applying_timeinforce(Order, Plan, TiF, Book);
+
+match_new_order(#order{side=Side,qtd=Qtd,price=Price,order_type=stop,timeinforce=TiF} = Order, Book) ->
+  error(unimplemented);
+
+match_new_order(#order{side=Side,qtd=Qtd,price=Price,order_type=stoplimit,timeinforce=TiF} = Order, Book) ->
+  error(unimplemented);
+
+match_new_order(#order{side=Side,qtd=Qtd,price=Price,order_type=marketwithleftoverlimit,timeinforce=TiF} = Order, Book) ->
+  error(unimplemented).
 
 % traverse table of available orders selecting compatible orders.
-create_matching_plan(OrderT, Side, Price, QtdToFill) ->
-  Collector = fun (Item, #execplan{selected=Selected, qtdleft=QtdToFill, price=DesiredPrice} ) ->
-    if
-      QtdToFill =< 0 -> done;
-      true ->
-        if
-          Item#order.price >= DesiredPrice ->
-            NewQtd = QtdToFill - min(Item#order.qtd, QtdToFill),
-            {Selected ++ [Item], NewQtd, DesiredPrice};
-          true ->
-            {Selected, QtdToFill, DesiredPrice}
-        end
-    end
+create_matching_plan(OrderT, Side, Price, Qtd) ->
+  Collector =
+    fun (Item, State) ->
+      #execplan{selected=Selected, qtdleft=QtdToFill, price=DesiredPrice}=State,
+      if
+        QtdToFill =< 0 -> done;
+        true ->
+          if
+            apply_selection_criterion(Side, Item, DesiredPrice) ->
+              NewQtd = QtdToFill - min(Item#order.qtd_left, QtdToFill),
+              State#execplan{selected=Selected ++ [Item], qtdleft=NewQtd};
+            true ->
+              State
+          end
+      end
   end,
-  traverse_ets_table(OrderT, nil, Collector, #execplan{price=Price, qtdleft=QtdToFill}).
+  traverse_ets_table(OrderT, nil, Collector, #execplan{selected=[], price=Price, qtdleft=Qtd}).
 
-execute_plan_if_compatible_with_timeinforce(Plan = #execplan{}) ->
+apply_selection_criterion(buy, #order{price=Price, order_type=Type}, DesiredPrice)->
+  Item#order.price =< DesiredPrice;
+apply_selection_criterion(sell, #order{price=Price, order_type=Type}, DesiredPrice)->
+  Item#order.price >= DesiredPrice.
+
+% Fill Or Kill (FOK/All_or_nothing) orders (59 = 4) require that the full amount stated in the order is
+% executed upon entering the order book. If there is not enough quantity on the opposite
+% side to fill the order, the order is acknowledged then cancelled.
+execute_plan_applying_timeinforce(Order,
+                                  #execplan{selected=Orders, qtdleft=LeavesQtd} = Plan,
+                                  fillorkill, Book) ->
+  case LeavesQtd > 0 of
+    true  -> cancel_order(Order, "not enough quantity on the opposite side", Book);
+    false -> execute_plan(Order, Plan, Book)
+  end;
+
+% The Immediate or Cancel validity (59 = 3), also known as Fill and Kill (FAK),
+% indicates that the order requires immediate execution, and the unexecuted quantity is
+% automatically cancelled. If there is no counterparty to execute against,
+% the order is acknowledged then cancelled
+execute_plan_applying_timeinforce(Order,
+                                  #execplan{selected=[]},
+                                  immediateorcancel, Book) ->
+  cancel_order(Order, "not counterparty on the opposite side", Book);
+
+execute_plan_applying_timeinforce(Order,
+                                  #execplan{selected=Orders, qtdleft=LeavesQtd} = Plan,
+                                  immediateorcancel, Book) ->
+  NewOrder = execute_plan(Order, Plan, Book),
+  case LeavesQtd > 0 of
+    true  -> cancel_order(NewOrder, "unexecuted quantity cancelled", Book);
+    false -> complete_order(NewOrder, Book)
+  end;
+
+execute_plan_applying_timeinforce(Order,
+                                  #execplan{selected=Orders, qtdleft=LeavesQtd} = Plan,
+                                  TimeInForce, Book) ->
+  % day | goodtillcancel | goodtilldate | attheclose | goodforauction
+  NewOrder = execute_plan(Order, Plan, Book),
+  case LeavesQtd > 0 of
+    true  -> partial_fill_order(NewOrder, Book);
+    false -> complete_order(NewOrder, Book)
+  end.
+
+execute_plan(Order, #execplan{selected=Orders, qtdleft=LeavesQtd} = Plan, Book) ->
   ok.
 
+% ----- Changes order state + the ets tables
 
+partial_fill_order(_Order, _Book) ->
+  ok.
 
-traverse_ets_table(Table, Key, Collector, State) ->
-  KeyToUse = case Key of
-    nil ->  ets:first(Table);
-    _ ->    ets:next(Table, Key)
-  end,
-  case KeyToUse of
-    '$end_of_table' -> State;
-    _ ->
-      [Order|_] = ets:lookup(Table, KeyToUse), % this always returns a list
-      NewState = Collector(Order, State),
-      if
-        % if Collector returns done we stop traversing
-        % and return previous good state
-        NewState =:= done -> State;
-        true -> traverse_ets_table(Table, KeyToUse, Collector, NewState)
-      end
-  end.
+complete_order(_Order, _Book) ->
+  ok.
+
+reject_order(_Order, _Reason, _Book) ->
+  ok.
+
+cancel_order(_Order, _Reason, _Book) ->
+  ok.
 
 % ----- Events that generate Execution reports
 
-send_accept(#order{} = Order) ->
+send_accept_notification(_Order) ->
   % nexchange_trading_book_eventmgr:notify_match(),
   ok.
 
-send_reject(#order{} = Order, Reason) ->
+send_reject_notification(_Order, _Reason) ->
   % nexchange_trading_book_eventmgr:notify_match(),
   ok.
 
@@ -132,12 +174,27 @@ normalize_price(Price) when is_number(Price) ->
   % remove 4 decimals by multipling by 10000
   round(Price * 10000). % round converts it back to integer
 
-
 % ----- Utility functions
+
+traverse_ets_table(Table, Key, Collector, State) ->
+  KeyToUse = case Key of
+    nil ->  ets:first(Table);
+    _ ->    ets:next(Table, Key)
+  end,
+  case KeyToUse of
+    '$end_of_table' -> State; % end of table, return state
+    _ ->                      % evaluate next line
+      [Line|_] = ets:lookup(Table, KeyToUse), % this always returns a list
+      NewState = Collector(Line, State),
+      if
+        % if Collector returns 'done' we stop traversing and return previous state
+        NewState =:= done -> State;
+        true -> traverse_ets_table(Table, KeyToUse, Collector, NewState)
+      end
+  end.
 
 other_side(buy, #orderbook{sells=SellsT}) -> SellsT;
 other_side(sell, #orderbook{buys=BuysT}) -> BuysT.
-
 
 get_now() -> erlang:system_time(micro_seconds). % - 1441736774862944.
 

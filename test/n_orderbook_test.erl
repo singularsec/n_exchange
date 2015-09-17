@@ -1,4 +1,4 @@
--module(nexchange_book_test).
+-module(n_orderbook_test).
 
 -compile(export_all).
 

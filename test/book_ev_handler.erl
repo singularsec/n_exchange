@@ -4,12 +4,9 @@
 
 -behavior(gen_event).
 
-
-
 % Callback
 
 init(_Args) ->
-  error_logger:info_msg("book_ev_handler is up ~p ~n", _Args),
   State = [],
   {ok, State}.
 
