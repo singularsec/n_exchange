@@ -8,6 +8,7 @@
                 qtd_left,
                 qtd_last,
 
+                order_status,
                 price,
                 price_type,
                 time,
