@@ -175,7 +175,6 @@ update_state(#order{qtd_left=0} = Order, Book) ->
 update_state(Order, Book) ->
   partial_fill_order(Order, Book).
 
-
 partial_fill_order(Order, Book) ->
   replace_in_ets(Order, Book),
   send_partial_fill_notification(Order),
@@ -183,15 +182,17 @@ partial_fill_order(Order, Book) ->
 
 complete_order(#order{id=Key, side=Side} = Order, Book) ->
   remove_from_ets(Order, Book),
-  send_filled_notification(Order, Book),
+  send_filled_notification(Order),
   Order.
 
-reject_order(Order, _Reason, Book) ->
+reject_order(Order, Reason, Book) ->
   remove_from_ets(Order, Book),
+  send_reject_notification(Order, Reason),
   Order.
 
-cancel_order(Order, _Reason, Book) ->
+cancel_order(Order, Reason, Book) ->
   remove_from_ets(Order, Book),
+  send_cancel_notification(Order, Reason),
   Order.
 
 % ----- ets tables
@@ -208,23 +209,23 @@ send_accept_notification(Order) ->
   nexchange_trading_book_eventmgr:notify_accept(Order).
 
 send_reject_notification(Order, Reason) ->
-  nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+  nexchange_trading_book_eventmgr:notify_rejection(Order, Reason).
 
 send_cancel_notification(Order, Reason) ->
-  nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+  nexchange_trading_book_eventmgr:notify_cancel(Order, Reason).
 
 send_filled_notification(Order) ->
-  nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+  nexchange_trading_book_eventmgr:notify_fill(Order).
 
 send_partial_fill_notification(Order) ->
   nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+
+% ----- Utility functions
 
 normalize_price(Price) when is_atom(Price) -> 0;
 normalize_price(Price) when is_number(Price) ->
   % remove 4 decimals by multipling by 10000
   round(Price * 10000). % round converts it back to integer
-
-% ----- Utility functions
 
 traverse_ets_table(Table, Key, Collector, State) ->
   KeyToUse = case Key of
