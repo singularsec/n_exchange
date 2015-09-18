@@ -21,14 +21,14 @@ notify_accept(Order) ->
   gen_event:notify(nexchange_trading_book_eventmgr, {accept, Order}).
 
 
--spec notify_fill('order') -> ok.
-notify_fill(Order) ->
-  gen_event:notify(nexchange_trading_book_eventmgr, {full_fill, Order}).
+-spec notify_fill('order', number()) -> ok.
+notify_fill(Order, Price) ->
+  gen_event:notify(nexchange_trading_book_eventmgr, {full_fill, Order, Price}).
 
 
--spec notify_partial_fill('order') -> ok.
-notify_partial_fill(Order) ->
-  gen_event:notify(nexchange_trading_book_eventmgr, {partial_fill, Order}).
+-spec notify_partial_fill('order', number()) -> ok.
+notify_partial_fill(Order, Price) ->
+  gen_event:notify(nexchange_trading_book_eventmgr, {partial_fill, Order, Price}).
 
 
 -spec notify_rejection('order', any()) -> ok.

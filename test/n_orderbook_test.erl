@@ -38,7 +38,17 @@ limit_price_match_order_sell_test(EventMgrPid) ->
 
   All = gen_event:call(EventMgrPid, book_ev_handler, get_all),
 
-  error_logger:info_msg("call returned  ~p ~n", All),
+  % Item#order.price, {qtd,Item#order.qtd}, {filled,Item#order.qtd_filled}, {left, Item#order.qtd_left}, {last,Item#order.qtd_last}
+
+  % All2 = lists:map(fun ({Msg,Item}) -> {Msg,
+  %   Item#order.cl_ord_id,
+  %   Item#order.price / 10000,
+  %   {qtd,Item#order.qtd},
+  %   {filled,Item#order.qtd_filled},
+  %   {left, Item#order.qtd_left},
+  %   {last,Item#order.qtd_last}} end, All),
+
+  error_logger:info_msg("R ~p ~n", [All]),
 
   [].
 

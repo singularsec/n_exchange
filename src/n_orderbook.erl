@@ -129,7 +129,7 @@ execute_plan_applying_timeinforce(Order,
   NewOrder = execute_plan(Order, Plan, Book),
   case LeavesQtd > 0 of
     true  -> cancel_order(NewOrder, "unexecuted quantity cancelled", Book);
-    false -> complete_order(NewOrder, Book)
+    _ -> NewOrder
   end;
 
 execute_plan_applying_timeinforce(Order,
@@ -152,40 +152,53 @@ execute_plan(Order, #execplan{selected=Orders}, Book) ->
   execute_plan(Order, Orders, Book);
 
 execute_plan(#order{qtd_filled=Filled,qtd_left=LeavesQtd}=Order, [MatchedOrder|Rest], Book) ->
-  #order{qtd_left=AvailableQtd} = MatchedOrder,
+  #order{qtd_left=AvailableQtd, price=MatchPrice} = MatchedOrder,
 
   HowMany = min(LeavesQtd, AvailableQtd),
 
   NewMatchedOrder = decrement_qtd(HowMany, MatchedOrder),
   NewOrder        = decrement_qtd(HowMany, Order),
 
-  update_state(NewMatchedOrder, Book),
-  update_state(NewOrder, Book),
+  record_match(NewMatchedOrder, NewOrder, MatchPrice, Book),
+  record_match(NewOrder, NewMatchedOrder, MatchPrice, Book),
 
   execute_plan(NewOrder, Rest, Book).
 
 % qtd, qtd_filled, qtd_left, qtd_last
-decrement_qtd(ByHowMany, #order{qtd=_Original, qtd_filled=Filled, qtd_left=LeavesQtd, qtd_last=Last}=Order) ->
+decrement_qtd(ByHowMany, #order{qtd=Original, qtd_filled=Filled, qtd_left=LeavesQtd, qtd_last=Last}=Order) ->
   % TODO: use Original to assert consistency
-  Order#order{qtd_filled=Filled + ByHowMany, qtd_left=LeavesQtd - ByHowMany, qtd_last=ByHowMany}.
-
+  NewStatus =
+    case Filled + ByHowMany of
+      Original -> filled;
+      _ -> partial
+    end,
+  Order#order{order_status=NewStatus,
+              qtd_filled=Filled + ByHowMany,
+              qtd_left=LeavesQtd - ByHowMany,
+              qtd_last=ByHowMany}.
 
 % ----- Changes order state + the ets tables
 
-update_state(#order{qtd_left=0} = Order, Book) ->
-  complete_order(Order, Book);
+record_match(#order{qtd_left=0} = Order, _WithThisOrder, Price, Book) ->
+  complete_order(Order, Price, Book);
 
-update_state(Order, Book) ->
-  partial_fill_order(Order, Book).
+record_match(Order, _WithThisOrder, Price, Book) ->
+  partial_fill_order(Order, Price, Book).
 
-partial_fill_order(Order, Book) ->
+% update_state(#order{qtd_left=0} = Order, Book) ->
+%   complete_order(Order, Book);
+%
+% update_state(Order, Book) ->
+%   partial_fill_order(Order, Book).
+
+partial_fill_order(Order, Price, Book) ->
   replace_in_ets(Order, Book),
-  send_partial_fill_notification(Order),
+  send_partial_fill_notification(Order, Price),
   Order.
 
-complete_order(#order{id=Key, side=Side} = Order, Book) ->
+complete_order(#order{id=Key, side=Side} = Order, Price, Book) ->
   remove_from_ets(Order, Book),
-  send_filled_notification(Order),
+  send_filled_notification(Order, Price),
   Order.
 
 reject_order(Order, Reason, Book) ->
@@ -217,11 +230,11 @@ send_reject_notification(Order, Reason) ->
 send_cancel_notification(Order, Reason) ->
   nexchange_trading_book_eventmgr:notify_cancel(Order, Reason).
 
-send_filled_notification(Order) ->
-  nexchange_trading_book_eventmgr:notify_fill(Order).
+send_filled_notification(Order, Price) ->
+  nexchange_trading_book_eventmgr:notify_fill(Order, Price).
 
-send_partial_fill_notification(Order) ->
-  nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+send_partial_fill_notification(Order, Price) ->
+  nexchange_trading_book_eventmgr:notify_partial_fill(Order, Price).
 
 % ----- Utility functions
 
