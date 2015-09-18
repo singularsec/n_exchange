@@ -17,7 +17,7 @@ create(Symbol) ->
   SellTName = list_to_atom( atom_to_list(sell) ++ "_" ++ Symbol ),
   BuysT  = ets:new(BuyTName,  [ordered_set, {keypos, #order.oid}]),
   SellsT = ets:new(SellTName, [ordered_set, {keypos, #order.oid}]),
-  #orderbook{sells=SellsT, buys=BuysT, lasttrade=0}.
+  #orderbook{sells=SellsT, buys=BuysT}.
 
 add_new_order_single(#order{} = Order, Book) ->
   SupportedOrderTypes = [ limit, market, stop, stoplimit, marketwithleftoverlimit ],
@@ -133,20 +133,27 @@ execute_plan_applying_timeinforce(Order,
   end;
 
 execute_plan_applying_timeinforce(Order,
-                                  #execplan{selected=Orders, qtdleft=LeavesQtd} = Plan,
+                                  #execplan{selected=[]},
+                                  _TimeInForce, _Book) ->
+  % nothing matched, so nothing else to do
+  Order;
+
+execute_plan_applying_timeinforce(Order,
+                                  #execplan{qtdleft=LeavesQtd} = Plan,
                                   TimeInForce, Book) ->
   % day | goodtillcancel | goodtilldate | attheclose | goodforauction
   NewOrder = execute_plan(Order, Plan, Book),
-  case LeavesQtd > 0 of
-    true  -> partial_fill_order(NewOrder, Book);
-    false -> complete_order(NewOrder, Book)
-  end.
-
-execute_plan(Order, #execplan{selected=Orders}, Book) ->
-  execute_plan(Order, Orders, Book);
+  NewOrder.
+  % case LeavesQtd > 0 of
+  %   true  -> partial_fill_order(NewOrder, Book);
+  %   false -> complete_order(NewOrder, Book)
+  % end.
 
 execute_plan(Order, [], _Book) ->
   Order;
+
+execute_plan(Order, #execplan{selected=Orders}, Book) ->
+  execute_plan(Order, Orders, Book);
 
 execute_plan(#order{qtd_filled=Filled,qtd_left=LeavesQtd}=Order, [MatchedOrder|Rest], Book) ->
   #order{qtd_left=AvailableQtd} = MatchedOrder,

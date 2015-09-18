@@ -2,7 +2,7 @@
 -record(order, {oid,  % used for sorting only!
                 symbol,
                 id,
-                
+
                 qtd,
                 qtd_filled,
                 qtd_left,
@@ -24,7 +24,7 @@
                 cl_ord_id
                 }).
 
--record(orderbook, {sells=[], buys=[], lasttrade=0}).
+-record(orderbook, {sells=[], buys=[]}).
 
 -record(fillbook,  {sells=[], buys=[]}).
 

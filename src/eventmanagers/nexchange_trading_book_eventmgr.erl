@@ -4,6 +4,9 @@
 % -export([notify_fill/1]).
 -compile(export_all).
 
+% -ifdef(EUNIT).
+% -else.
+% -endif.
 
 % API
 
@@ -36,4 +39,3 @@ notify_rejection(Order, Reason) ->
 -spec notify_cancel('order', any()) -> ok.
 notify_cancel(Order, Reason) ->
   gen_event:notify(nexchange_trading_book_eventmgr, {cancel, Reason, Order}).
-

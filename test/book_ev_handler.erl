@@ -4,6 +4,8 @@
 
 -behavior(gen_event).
 
+-include("../include/secexchange.hrl").
+
 % Callback
 
 init(_Args) ->
@@ -11,8 +13,8 @@ init(_Args) ->
   {ok, State}.
 
 handle_event({Key, Order}, State) ->
-  error_logger:info_msg("event arrived  ~p ~n", Key),
-  NewList = [{Key, Order}] ++ State,
+  error_logger:info_msg("event arrived  ~p ~n", [Key]),
+  NewList = State ++ [{Key, Order#order.cl_ord_id}],
   {ok, NewList};
 
 % handle_event({change_rejected, Order}, State) ->

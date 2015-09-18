@@ -32,13 +32,13 @@ limit_price_match_order_sell_test(EventMgrPid) ->
   n_orderbook:add_new_order_single(#order{price=10, order_type=limit, qtd=100, side=buy, cl_ord_id="t1"}, Book),
   n_orderbook:add_new_order_single(#order{price=10, order_type=limit, qtd=100, side=buy, cl_ord_id="t2"}, Book),
 
-  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, qtd=100, side=sell, cl_ord_id="t3"}, Book),
+  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, qtd=200, side=sell, cl_ord_id="t3"}, Book),
 
   % nexchange_trading_book_eventmgr:notify_fill(#order{price=10}),
 
-  % All = gen_event:call(EventMgrPid, book_ev_handler, get_all),
+  All = gen_event:call(EventMgrPid, book_ev_handler, get_all),
 
-  % error_logger:info_msg("call returned  ~p ~n", All),
+  error_logger:info_msg("call returned  ~p ~n", All),
 
   [].
 
