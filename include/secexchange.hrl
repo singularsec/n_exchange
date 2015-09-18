@@ -19,7 +19,8 @@
                 from_sessionid,
                 to_sessionid,
                 id,
-                oid  % used for sorting only!
+                oid,  % used for sorting only!
+                matches=[]
                 }).
 
 -record(orderbook, {sells=[], buys=[]}).

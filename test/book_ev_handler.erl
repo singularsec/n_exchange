@@ -13,13 +13,8 @@ init(_Args) ->
   {ok, State}.
 
 handle_event({Key, Order}, State) ->
-  error_logger:info_msg("event arrived  ~p ~n", [Key]),
+  % error_logger:info_msg("event arrived  ~p ~n", [Key]),
   NewList = State ++ [{Key, Order}],
-  {ok, NewList};
-
-handle_event({Key, Order, Price}, State) ->
-  error_logger:info_msg("event arrived  ~p ~n", [Key]),
-  NewList = State ++ [{Key, Order, Price}],
   {ok, NewList};
 
 % handle_event({change_rejected, Order}, State) ->
