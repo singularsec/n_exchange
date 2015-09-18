@@ -1,16 +1,13 @@
 
--record(order, {oid,  % used for sorting only!
-                symbol,
-                id,
-
+-record(order, {symbol,
+                cl_ord_id,
                 qtd,
                 qtd_filled,
                 qtd_left,
                 qtd_last,
-
-                order_status,
                 price,
                 price_type,
+                order_status,
                 time,
                 order_type,
                 side,
@@ -21,7 +18,8 @@
                 account,
                 from_sessionid,
                 to_sessionid,
-                cl_ord_id
+                id,
+                oid  % used for sorting only!
                 }).
 
 -record(orderbook, {sells=[], buys=[]}).

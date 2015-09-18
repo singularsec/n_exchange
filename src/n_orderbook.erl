@@ -144,10 +144,6 @@ execute_plan_applying_timeinforce(Order,
   % day | goodtillcancel | goodtilldate | attheclose | goodforauction
   NewOrder = execute_plan(Order, Plan, Book),
   NewOrder.
-  % case LeavesQtd > 0 of
-  %   true  -> partial_fill_order(NewOrder, Book);
-  %   false -> complete_order(NewOrder, Book)
-  % end.
 
 execute_plan(Order, [], _Book) ->
   Order;
@@ -166,7 +162,7 @@ execute_plan(#order{qtd_filled=Filled,qtd_left=LeavesQtd}=Order, [MatchedOrder|R
   update_state(NewMatchedOrder, Book),
   update_state(NewOrder, Book),
 
-  execute_plan(Order, Rest, Book).
+  execute_plan(NewOrder, Rest, Book).
 
 % qtd, qtd_filled, qtd_left, qtd_last
 decrement_qtd(ByHowMany, #order{qtd=_Original, qtd_filled=Filled, qtd_left=LeavesQtd, qtd_last=Last}=Order) ->
