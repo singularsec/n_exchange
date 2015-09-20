@@ -9,6 +9,7 @@
 -include("../include/fix_session.hrl").
 -include("../include/admin44.hrl").
 -include("../include/business44.hrl").
+-include("../include/secexchange.hrl").
 
 
 % API
@@ -40,9 +41,13 @@ init(Socket) ->
 handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.
 
-handle_cast(write, State) ->
-  % output to socket
-  {noreply, State};
+handle_cast({send, #execreport{} = Report},
+            #state{socket=Socket, our_seq=Seq} = State) ->
+
+  Bin = exec_report:report_to_fix_bin(Report, Seq),
+  gen_tcp:send(Socket, Bin),
+
+  {noreply, State#state{our_seq=Seq+1}};
 
 handle_cast(_Request, State) ->
 	{stop, unimplemented, State}.

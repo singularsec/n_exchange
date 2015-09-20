@@ -27,4 +27,30 @@
 
 -record(fillbook,  {sells=[], buys=[]}).
 
--record(execreport, {}).
+-record(execreportqtd,   {order_qtd, last, leaves, cum}).
+-record(execreportprice, {avg, last, price}).
+-record(execparty,       {id, source, role}).
+
+-record(execreport, {order_id,
+                     secondary_order_id,
+                     exec_id,
+                     exec_type,
+                     order_status,
+                     order_type,
+                     cl_ord_id,
+                     orig_cl_ord_id,
+                     account,
+                     symbol,
+                     side,
+                     timeinforce,
+                     transact_time, trade_date,
+                     qtd,    % execreportqtd#
+                     price,  % execreportprice#
+                     contrabrokers=[],
+                     parties=[],
+                     text,   % for error messages
+                     sess_id=1,
+                     sess_sub_id=17,
+                     from_sessionid,
+                     to_sessionid
+                    }).

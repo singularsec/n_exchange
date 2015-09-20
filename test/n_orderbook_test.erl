@@ -6,24 +6,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-% -define(termL(Expr, L), {Expr, L} ).
-
-% -define(assertMatch_2(Guard, Expr),
-% 	((fun () ->
-% 	  case (Expr) of
-% 		  Guard -> ok;
-% 		  __V -> .erlang:error({assertMatch_failed,
-% 				      [{module, ?MODULE},
-% 				       {line, ?LINE},
-% 				       {expression, (??Expr)},
-% 				       {expected, (??Guard)},
-% 				       {value, __V}]})
-% 	    end
-% 	  end)())).
-% -define(_assertMatch_2(Guard, Expr), ?_test(?assertMatch_2(Guard, Expr))).
-
 -define(setup(F), {setup, fun start/0, fun stop/1, F}).
-
 
 start_stop_test_() ->
   {"Tests set up gen_event correctly",
@@ -49,9 +32,9 @@ limit_matching_time_in_force_is_immediateorcancel_success_test_() ->
   {"simple buy and sell with timeinforce = immediateorcancel succeeds",
    ?setup(fun limit_matching_time_in_force_is_immediateorcancel_test/1)}.
 
-limit_matching_time_in_force_is_immediateorcancel_cancel_leftover_test_() ->
-  {"simple buy and sell with timeinforce = immediateorcancel succeeds cancels qtd unmatched",
-   ?setup(fun limit_matching_time_in_force_is_immediateorcancel_leftover_test/1)}.
+% limit_matching_time_in_force_is_immediateorcancel_cancel_leftover_test_() ->
+%   {"simple buy and sell with timeinforce = immediateorcancel succeeds cancels qtd unmatched",
+%    ?setup(fun limit_matching_time_in_force_is_immediateorcancel_leftover_test/1)}.
 
 % limit_matching_time_in_force_is_immediateorcancel_cancel_leftover_test_() ->
 %   {"buys at 11, sells at 11 and 12",
@@ -71,7 +54,7 @@ limit_matching_time_in_force_is_immediateorcancel_cancel_leftover_test_() ->
 is_event_manager_setup_correctly(Pid) ->
   [?_assert(erlang:is_process_alive(Pid)),
    ?_assertEqual(Pid, whereis(nexchange_trading_book_eventmgr))].
-   
+
 
 limit_matching_time_in_force_is_immediateorcancel_test(EventMgrPid) ->
   Book = n_orderbook:create("PETR5"),
@@ -82,8 +65,8 @@ limit_matching_time_in_force_is_immediateorcancel_test(EventMgrPid) ->
   assertMatch(
   [ {accept,    "t1", 10.0, sell, new,    {qtd,100}, {filled, 0},   {left, 100}, {last, 0},   {matches, []}},
     {accept,    "t2", 11.0, buy,  new,    {qtd,100}, {filled, 0},   {left, 100}, {last, 0},   {matches, []}},
-    {full_fill, "t1", 10.0, sell, filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{100000,100}]}},
-    {full_fill, "t2", 11.0, buy,  filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{100000,100}]}}
+    {full_fill, "t1", 10.0, sell, filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{10.0,100}]}},
+    {full_fill, "t2", 11.0, buy,  filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{10.0,100}]}}
   ], All).
 
 
@@ -97,9 +80,9 @@ limit_matching_time_in_force_is_immediateorcancel_leftover_test(EventMgrPid) ->
   [
     {accept,       "t1", 10.0, sell, new,       {qtd, 50}, {filled, 0},   {left,  50}, {last, 0},   {matches, []}},
     {accept,       "t2", 11.0, buy,  new,       {qtd,100}, {filled, 0},   {left, 100}, {last, 0},   {matches, []}},
-    {full_fill,    "t1", 10.0, sell, filled,    {qtd,50},  {filled, 50},  {left, 0},   {last, 50},  {matches, [{100000,50}]}},
-    {partial_fill, "t2", 11.0, buy,  partial,   {qtd,100}, {filled, 50},  {left, 50},  {last, 50},  {matches, [{100000,50}]}},
-    {cancel,       "t2", 11.0, buy,  canceled,  {qtd,100}, {filled, 50},  {left, 50},  {last, 50},  {matches, [{100000,50}]}, "unexecuted quantity cancelled"}
+    {full_fill,    "t1", 10.0, sell, filled,    {qtd,50},  {filled, 50},  {left, 0},   {last, 50},  {matches, [{10.0,50}]}},
+    {partial_fill, "t2", 11.0, buy,  partial,   {qtd,100}, {filled, 50},  {left, 50},  {last, 50},  {matches, [{10.0,50}]}},
+    {cancel,       "t2", 11.0, buy,  canceled,  {qtd,100}, {filled, 50},  {left, 50},  {last, 50},  {matches, [{10.0,50}]}, "unexecuted quantity cancelled"}
   ], All).
 
 
@@ -113,8 +96,8 @@ limit_sell_first_test(EventMgrPid) ->
   [
     {accept,    "t1", 10.0, sell, new,    {qtd,100}, {filled, 0},   {left, 100}, {last, 0},   {matches, []}},
     {accept,    "t2", 11.0, buy,  new,    {qtd,100}, {filled, 0},   {left, 100}, {last, 0},   {matches, []}},
-    {full_fill, "t1", 10.0, sell, filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{100000,100}]}},
-    {full_fill, "t2", 11.0, buy,  filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{100000,100}]}}
+    {full_fill, "t1", 10.0, sell, filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{10.0,100}]}},
+    {full_fill, "t2", 11.0, buy,  filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{10.0,100}]}}
   ], All).
 
 
@@ -128,8 +111,8 @@ limit_buy_first_test(EventMgrPid) ->
   [
     {accept,    "t1", 11.0, buy,  new,    {qtd,100}, {filled, 0},   {left, 100}, {last, 0},   {matches, []}},
     {accept,    "t2", 10.0, sell, new,    {qtd,100}, {filled, 0},   {left, 100}, {last, 0},   {matches, []}},
-    {full_fill, "t1", 11.0, buy,  filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{110000,100}]}},
-    {full_fill, "t2", 10.0, sell, filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{110000,100}]}}
+    {full_fill, "t1", 11.0, buy,  filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{11.0,100}]}},
+    {full_fill, "t2", 10.0, sell, filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 100}, {matches, [{11.0,100}]}}
   ], All).
 
 
@@ -144,11 +127,11 @@ limit_buy_first_2_test(EventMgrPid) ->
   [
     {accept,       "t1", 11.0, buy,  new,    {qtd,100}, {filled, 0},   {left, 100}, {last, 0},   {matches, []}},
     {accept,       "t2", 10.0, sell, new,    {qtd, 50}, {filled, 0},   {left, 50},  {last, 0},   {matches, []}},
-    {partial_fill, "t1", 11.0, buy, partial, {qtd,100}, {filled, 50},  {left, 50},  {last, 50},  {matches, [{110000,50}]}},
-    {full_fill,    "t2", 10.0, sell, filled, {qtd,50},  {filled, 50},  {left, 0},   {last, 50},  {matches, [{110000,50}]}},
+    {partial_fill, "t1", 11.0, buy, partial, {qtd,100}, {filled, 50},  {left, 50},  {last, 50},  {matches, [{11.0,50}]}},
+    {full_fill,    "t2", 10.0, sell, filled, {qtd,50},  {filled, 50},  {left, 0},   {last, 50},  {matches, [{11.0,50}]}},
     {accept,       "t3",  9.0, sell, new,    {qtd, 50}, {filled, 0},   {left, 50},  {last, 0},   {matches, []}},
-    {full_fill,    "t1", 11.0, buy,  filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 50},  {matches, [{110000,50},{110000,50}]}},
-    {full_fill,    "t3",  9.0, sell, filled, {qtd,50},  {filled, 50},  {left, 0},   {last, 50},  {matches, [{110000,50}]}}
+    {full_fill,    "t1", 11.0, buy,  filled, {qtd,100}, {filled, 100}, {left, 0},   {last, 50},  {matches, [{11.0,50},{11.0,50}]}},
+    {full_fill,    "t3",  9.0, sell, filled, {qtd,50},  {filled, 50},  {left, 0},   {last, 50},  {matches, [{11.0,50}]}}
   ], All).
 
 
@@ -163,11 +146,11 @@ limit_sell_first_2_test(EventMgrPid) ->
   [
     {accept,       "t1", 11.0, sell, new,    {qtd,100},{filled,0},  {left,100},{last,0},  {matches,[]}},
     {accept,       "t2", 11.0, buy,  new,    {qtd,50}, {filled,0},  {left,50}, {last,0},  {matches,[]}},
-    {partial_fill, "t1", 11.0, sell, partial,{qtd,100},{filled,50}, {left,50}, {last,50}, {matches,[{110000,50}]}},
-    {full_fill,    "t2", 11.0, buy,  filled, {qtd,50}, {filled,50}, {left,0},  {last,50}, {matches,[{110000,50}]}},
+    {partial_fill, "t1", 11.0, sell, partial,{qtd,100},{filled,50}, {left,50}, {last,50}, {matches,[{11.0,50}]}},
+    {full_fill,    "t2", 11.0, buy,  filled, {qtd,50}, {filled,50}, {left,0},  {last,50}, {matches,[{11.0,50}]}},
     {accept,       "t3", 12.0, buy,  new,    {qtd,50}, {filled,0},  {left,50}, {last,0},  {matches,[]}},
-    {full_fill,    "t1", 11.0, sell, filled, {qtd,100},{filled,100},{left,0},  {last,50}, {matches,[{110000,50},{110000,50}]}},
-    {full_fill,    "t3", 12.0, buy,  filled, {qtd,50}, {filled,50}, {left,0},  {last,50}, {matches,[{110000,50}]}}
+    {full_fill,    "t1", 11.0, sell, filled, {qtd,100},{filled,100},{left,0},  {last,50}, {matches,[{11.0,50},{11.0,50}]}},
+    {full_fill,    "t3", 12.0, buy,  filled, {qtd,50}, {filled,50}, {left,0},  {last,50}, {matches,[{11.0,50}]}}
   ], All).
 
 
@@ -206,7 +189,7 @@ translate({Msg, {#order{cl_ord_id=ClOrdId} = Item, Reason}}) ->
    {filled, Item#order.qtd_filled},
    {left, Item#order.qtd_left},
    {last, Item#order.qtd_last},
-   {matches, Item#order.matches}, Reason};
+   {matches, strip_matches(Item#order.matches)}, Reason};
 
 translate({Msg, #order{cl_ord_id=ClOrdId} = Item}) ->
   {Msg,
@@ -218,8 +201,16 @@ translate({Msg, #order{cl_ord_id=ClOrdId} = Item}) ->
    {filled, Item#order.qtd_filled},
    {left, Item#order.qtd_left},
    {last, Item#order.qtd_last},
-   {matches, Item#order.matches}}.
+   {matches, strip_matches(Item#order.matches)}}.
 
 collect_events(EventMgrPid) ->
   All = gen_event:call(EventMgrPid, book_ev_handler, get_all),
   lists:map(fun translate/1, All).
+
+strip_matches(Matches) ->
+  lists:map(fun ({P,Q,_SecOrder}) -> {P/10000, Q} end, Matches).
+
+
+
+
+%

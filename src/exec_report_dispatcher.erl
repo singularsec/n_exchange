@@ -11,10 +11,10 @@
 
 % Report is execreport from secexchange
 % Order is order from secexchange
-dispatch(Report, Order#order{from_sessionid=SessionId}) ->
+dispatch(Report, Order=#order{from_sessionid=SessionId}) ->
 
   Pids = nexchange_sessionregistry:get_fixsessions(SessionId),
-  
+
   multi_cast(Pids, {send, Report}).
 
 

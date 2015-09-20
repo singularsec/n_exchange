@@ -167,14 +167,14 @@ execute_plan(#order{qtd_filled=Filled,qtd_left=LeavesQtd}=Order, [MatchedOrder|R
 
 decrement_qtd_and_record(ByHowMany,
                          #order{qtd=Original, qtd_filled=Filled, qtd_left=LeavesQtd, qtd_last=Last, matches=MList}=Order,
-                         _WithOrder, Price) ->
+                         #order{id=OtherId} = _WithOrder, Price) ->
   % TODO: use Original to assert consistency
   NewStatus =
     case Filled + ByHowMany of
       Original -> filled;
       _ -> partial
     end,
-  NewList = [{Price,ByHowMany}] ++ MList,
+  NewList = [{Price,ByHowMany,OtherId}] ++ MList,
   Order#order{order_status=NewStatus,
               qtd_filled=Filled + ByHowMany,
               qtd_left=LeavesQtd - ByHowMany,
