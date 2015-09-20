@@ -23,5 +23,8 @@ exec_report_builder_test() ->
   },
 
   Bin = exec_report:report_to_fix_bin(Report, 100),
+  {ok, #execution_report{sending_time=_S} = HB,_Rest,_C} = fix:decode( iolist_to_binary(Bin) ),
+
+  error_logger:info_msg("Result ~n ~p ~n ~p ~n", [HB, fix:dump(Bin)]),
 
   ok.

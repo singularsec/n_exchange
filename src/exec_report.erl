@@ -146,6 +146,15 @@ to_fix44_body([{order_type, undefined}|Rest]) -> to_fix44_body(Rest);
 to_fix44_body([{order_type, V}|Rest]) ->
   [{ord_type,V}] ++ to_fix44_body(Rest);
 
+to_fix44_body([{sess_id, V}|Rest]) ->
+  [{ord_type,V}] ++ to_fix44_body(Rest);
+
+to_fix44_body([{sess_sub_id, V}|Rest]) ->
+  [{ord_type,V}] ++ to_fix44_body(Rest);
+
+to_fix44_body([{from_sessionid, _}|Rest]) -> to_fix44_body(Rest);
+to_fix44_body([{to_sessionid, _}|Rest]) -> to_fix44_body(Rest);
+
 to_fix44_body([{qtd, V}|Rest]) ->
   List = record_to_proplist(V),
   Body = to_fix44_body_qtd(List),
