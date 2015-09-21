@@ -120,7 +120,7 @@ to_fix44_body_price([{last,Qtd} | Rest])      -> [{last_px, Qtd}] ++ to_fix44_bo
 % -record(execparty,       {id, source, role}).
 to_fix44_body_party_item([]) -> [];
 to_fix44_body_party_item([#execparty{id=Id, source=Source, role=Role} | Rest]) ->
-  [{party_id, Id}, {party_id_source, Source}, {party_role, Role}] ++ to_fix44_body_contra_item(Rest).
+  [{party_id, Id}, {party_id_source, Source}, {party_role, Role}] ++ to_fix44_body_party_item(Rest).
 to_fix44_body_party(Parties) ->
   HowMany = length(Parties),
   [{no_party_ids, HowMany}] ++ to_fix44_body_party_item(Parties).
@@ -168,15 +168,11 @@ to_fix44_body([{price, V}|Rest]) ->
 
 to_fix44_body([{contrabrokers, V}|Rest]) ->
   Brokers = to_fix44_body_contra(V),
-  %  contra_brokers = [],
-  % [{contra_brokers, aa}]
   Brokers ++ to_fix44_body(Rest);
 
 % -record(execparty,       {id, source, role}).
 to_fix44_body([{parties, PartyList}|Rest]) ->
   Fields = to_fix44_body_party(PartyList),
-  %  fields = []
-  % [{fields, Fields}] ++ to_fix44_body(Rest);
   Fields ++ to_fix44_body(Rest);
 
 to_fix44_body([{Key, undefined} | Rest]) ->
