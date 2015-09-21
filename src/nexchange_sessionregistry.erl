@@ -5,7 +5,7 @@
 % API
 
 -export([start_link/0, stop/0, register_fixsession/2, unregister_fixsession/2,
-         get_fixsessions/1, get_registered/0]).
+         get_fixsessions/1, get_registered/0, get_allsessions/0]).
 
 % Callback
 
@@ -24,11 +24,18 @@ unregister_fixsession(SessionId, Pid) when is_pid(Pid) ->
 
 -spec get_fixsessions(any()) -> [pid()].
 get_fixsessions(SessionId) ->
-  Pids = gen_server:call(?MODULE, {get_sessions, SessionId}, 1000),
+  Pids = gen_server:call(?MODULE, {get_sessions, SessionId}),
   Pids.
 
+-spec get_allsessions() -> [pid()]. % all values
+get_allsessions() ->
+  Pids = gen_server:call(?MODULE, get_all_sessions),
+  Pids.
+
+-spec get_registered() -> [any()]. % all keys
 get_registered() ->
   gen_server:call(?MODULE, get_registered).
+
 
 
 % -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
@@ -51,11 +58,16 @@ handle_call(get_registered, _From, State) ->
   Keys = dict:fetch_keys(State),
   {reply, Keys, State};
 
+handle_call(get_all_sessions, _From, State) ->
+  All = dict:fold(fun (_K,V,A) -> V ++ A end, [], State),
+  {reply, All, State};
+
 handle_call({get_sessions, SessionId}, _From, State) ->
-  Sessions = case dict:is_key(SessionId, State) of
+  Key = normalize(SessionId),
+  Sessions = case dict:is_key(Key, State) of
     true ->
       % TODO: process_info/2 to check if PID is alive?
-      dict:fetch(SessionId, State);
+      dict:fetch(Key, State);
     false -> []
   end,
 	{reply, Sessions, State};
@@ -64,17 +76,19 @@ handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.
 
 handle_cast({register, Session, Pid}, State) ->
-  NewDict = dict:append(Session, Pid, State),
+  Key = normalize(Session),
+  NewDict = dict:append(Key, Pid, State),
   {noreply, NewDict};
 
 handle_cast({unregister, Session, Pid}, State) ->
-  NewDict = case dict:is_key(Session, State) of
+  Key = normalize(Session),
+  NewDict = case dict:is_key(Key, State) of
     true ->
-      Values = dict:fetch(Session, State),
+      Values = dict:fetch(Key, State),
       NewList = lists:delete(Pid, Values),
       case length(NewList) of
-        0 -> dict:erase(Session, State);
-        _ -> dict:store(Session, NewList, State)
+        0 -> dict:erase(Key, State);
+        _ -> dict:store(Key, NewList, State)
       end;
     false -> State
   end,
@@ -92,3 +106,11 @@ terminate(_Reason, State) ->
 
 code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
+
+% ------ Helpers
+
+normalize(Key) when is_binary(Key) ->
+  normalize(binary_to_list(Key));
+
+normalize(Key) ->
+  Key.

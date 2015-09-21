@@ -51,7 +51,7 @@ handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.
 
 handle_cast({new_order_single, #order{} = Order}, #state{book=Book} = State) ->
-  n_orderbook:match_order(Order, Book),
+  n_orderbook:add_new_order_single(Order, Book),
 	{noreply, State};
 
 handle_cast({change_order, #order{} = Order}, #state{book=Book} = State) ->

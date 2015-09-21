@@ -44,9 +44,12 @@ handle_call(_Request, _From, State) ->
 handle_cast({send, #execreport{} = Report},
             #state{socket=Socket, our_seq=Seq} = State) ->
 
+  error_logger:info_msg("sending exec report ~p ~n", [Report]),
+
   Bin = exec_report:report_to_fix_bin(Report, Seq),
   gen_tcp:send(Socket, Bin),
 
+  error_logger:info_msg("sending exec report done ~p ~n", [Bin]),
   {noreply, State#state{our_seq=Seq+1}};
 
 handle_cast(_Request, State) ->

@@ -4,8 +4,17 @@
 -compile(export_all).
 
 -include("log.hrl").
+-include("../include/business44.hrl").
 
 -type fix_message() :: any().
+
+
+record_to_proplist(#new_order_single{} = Rec) ->
+  lists:zip(record_info(fields, new_order_single), tl(tuple_to_list(Rec))).
+
+crack(#new_order_single{} = NOS) ->
+  Prop = record_to_proplist(NOS),
+  ?DBG("new_order_single ~n ~p ~n", [Prop]).
 
 
 %% @doc packs fix message into binary

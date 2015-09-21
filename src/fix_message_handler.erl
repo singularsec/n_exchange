@@ -11,18 +11,18 @@
 % http://www.bmfbovespa.com.br/en-us/services/trading-platforms/puma-trading-system/EntryPoint-quick-reference.asp
 
 handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("new_order_single ~p", Order),
+  ?DBG("new_order_single ~n ~p", fix:crack(Order)),
   fix_order_message_handler:handle_new_order_single(Order, Messages, Rest, State);
 
 
 handle_messages([{#heartbeat{} = Hb,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("heartbeat ~p", Hb#heartbeat.fields),
+  % ?DBG("heartbeat ~p", Hb#heartbeat.fields),
   Ts = erlang:timestamp(),
   handle_messages(Messages, Rest, State#state{lastheartbeat=Ts});
 
 
 handle_messages([{#test_request{test_req_id=ReqId} = Tr,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("test_request ~p", Tr),
+  % ?DBG("test_request ~p", Tr),
   NewState = send(heartbeat, [{test_req_id,ReqId}], Tr#test_request.fields, State),
   handle_messages(Messages, Rest, NewState);
 
@@ -41,7 +41,7 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
   %           {sender_comp_id,<<"INIT">>},
   %           {target_comp_id,<<"ACCEPT">>}]
   % },
-  ?DBG("logon ~p", [Logon#logon.fields, fix:dump(Bin)]),
+  % ?DBG("logon ~p", [Logon#logon.fields, fix:dump(Bin)]),
 
   NewState = send(logon,
                   [ {reset_seq_num_flag, "Y"},
@@ -82,6 +82,6 @@ send(MsgType, Body, Fields, #state{socket=Socket, our_seq=Seq} = State) ->
   % Reply = iolist_to_binary(ReplyBin),
   ok = gen_tcp:send(Socket, ReplyBin),
 
-  ?DBG("wrote to socket ~p ~p", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]),
+  ?DBG("wrote to socket ~n ~p ~n ~p ~n ~p ~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]),
 
   State#state{our_seq=Seq + 1}.

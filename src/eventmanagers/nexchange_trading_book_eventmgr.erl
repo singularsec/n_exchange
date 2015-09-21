@@ -13,26 +13,31 @@ setup_handlers() ->
 
 -spec notify_accept('order') -> ok.
 notify_accept(Order) ->
+  error_logger:info_msg("notify_accept ~n ~p ~n", [Order]),
   gen_event:notify(nexchange_trading_book_eventmgr, {accept, Order}).
 
 
 -spec notify_fill('order') -> ok.
 notify_fill(Order) ->
+  error_logger:info_msg("notify_fill ~n ~p ~n", [Order]),
   gen_event:notify(nexchange_trading_book_eventmgr, {full_fill, Order}).
 
 
 -spec notify_partial_fill('order') -> ok.
 notify_partial_fill(Order) ->
+  error_logger:info_msg("notify_partial_fill ~n ~p ~n", [Order]),
   gen_event:notify(nexchange_trading_book_eventmgr, {partial_fill, Order}).
 
 
 -spec notify_rejection('order', any()) -> ok.
 notify_rejection(Order, Reason) ->
+  error_logger:info_msg("notify_rejection ~n ~p ~n ~p ~n", [Order, Reason]),
   gen_event:notify(nexchange_trading_book_eventmgr, {rejection, {Order, Reason}}).
 
 
 -spec notify_cancel('order', any()) -> ok.
 notify_cancel(Order, Reason) ->
+  error_logger:info_msg("notify_cancel ~n ~p ~n ~p ~n", [Order, Reason]),
   gen_event:notify(nexchange_trading_book_eventmgr, {cancel, {Order, Reason}}).
 
 

@@ -18,6 +18,14 @@ unregister_fix_session_test_() ->
   {"When a session is unregisted, it changes the state of the registry",
   ?setup(fun unregister_and_assert/1)}.
 
+mix_and_match_keys_for_fix_session1_test_() ->
+  {"Using string or binary as key should be normalized and work",
+  ?setup(fun mix_match_and_assert1/1)}.
+
+mix_and_match_keys_for_fix_session2_test_() ->
+  {"Using string or binary as key should be normalized and work",
+  ?setup(fun mix_match_and_assert2/1)}.
+
 
 % ---- Actual tests
 
@@ -41,6 +49,24 @@ unregister_and_assert({Pid,_}) ->
   Keys = nexchange_sessionregistry:get_registered(),
   [?_assertEqual(0, length(Sessions)),
    ?_assertEqual(0, length(Keys))].
+
+mix_match_and_assert1({Pid,_}) ->
+  nexchange_sessionregistry:register_fixsession(<<"Session1">>, Pid),
+  Sessions = nexchange_sessionregistry:get_fixsessions("Session1"),
+  Keys = nexchange_sessionregistry:get_registered(),
+  [?_assertEqual(1, length(Sessions)),
+   ?_assertEqual(1, length(Keys)),
+   ?_assertMatch([Pid], Sessions),
+   ?_assertMatch(["Session1"], Keys)].
+
+mix_match_and_assert2({Pid,_}) ->
+ nexchange_sessionregistry:register_fixsession("Session1", Pid),
+ Sessions = nexchange_sessionregistry:get_fixsessions(<<"Session1">>),
+ Keys = nexchange_sessionregistry:get_registered(),
+ [?_assertEqual(1, length(Sessions)),
+  ?_assertEqual(1, length(Keys)),
+  ?_assertMatch([Pid], Sessions),
+  ?_assertMatch(["Session1"], Keys)].
 
 % ---- Setup / teardown
 

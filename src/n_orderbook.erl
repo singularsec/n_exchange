@@ -19,13 +19,20 @@ create(Symbol) ->
   SellsT = ets:new(SellTName, [ordered_set, {keypos, #order.oid}]),
   #orderbook{sells=SellsT, buys=BuysT}.
 
+change_order(#order{} = Order, Book) ->
+  ok.
+
+cancel_order(#order{} = Order, Book) ->
+  ok.
+
 add_new_order_single(#order{} = Order, Book) ->
   SupportedOrderTypes = [ limit, market, stop, stoplimit, marketwithleftoverlimit ],
   IsValid = lists:member(Order#order.order_type, SupportedOrderTypes),
   add_new_order_single(Order, Book, IsValid).
 
 add_new_order_single(#order{} = Order, _Book, false) ->
-  send_reject_notification(Order, "Unsupported order type: " ++ atom_to_list(Order#order.order_type) );
+  Msg = "Unsupported order type: " ++ atom_to_list(Order#order.order_type),
+  send_reject_notification(Order, Msg);
 
 add_new_order_single(#order{} = Order, Book, true) ->
   NewOrder = insert_order(Order, Book),
