@@ -42,7 +42,7 @@
                      account,
                      symbol,
                      side,
-                     timeinforce,
+                     time_in_force,
                      transact_time, trade_date,
                      qtd,    % execreportqtd#
                      price,  % execreportprice#

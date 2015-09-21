@@ -65,7 +65,7 @@ from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = O
               account = Order#order.account,
               symbol = Order#order.symbol,
               side = Order#order.side,
-              timeinforce = Order#order.timeinforce,
+              time_in_force = Order#order.timeinforce,
               % transact_time= % 60=20150716-14:51:11.152 |  TransactTime
               % trade_date= ,% 75=20150716 |    <--- TradeDate
               qtd = Qtd,
@@ -100,7 +100,8 @@ to_fix44_body_qtd([{last, Qtd} | Rest])        -> [{last_qty, Qtd}] ++ to_fix44_
 to_fix44_body_qtd([{leaves, undefined} | Rest])-> to_fix44_body_qtd(Rest);
 to_fix44_body_qtd([{leaves, Qtd} | Rest])      -> [{leaves_qty, Qtd}] ++ to_fix44_body_qtd(Rest);
 to_fix44_body_qtd([{cum, undefined} | Rest])   -> to_fix44_body_qtd(Rest);
-to_fix44_body_qtd([{cum, Qtd} | Rest])         -> [{cum_qty, Qtd}] ++ to_fix44_body_qtd(Rest).
+to_fix44_body_qtd([{cum, Qtd} | Rest])         -> [{cum_qty, Qtd}] ++ to_fix44_body_qtd(Rest);
+to_fix44_body_qtd([{_, _} | Rest])             -> to_fix44_body_qtd(Rest).
 
 % -record(execreportprice, {avg, last, price}).
 %   price,
@@ -147,10 +148,10 @@ to_fix44_body([{order_type, V}|Rest]) ->
   [{ord_type,V}] ++ to_fix44_body(Rest);
 
 to_fix44_body([{sess_id, V}|Rest]) ->
-  [{ord_type,V}] ++ to_fix44_body(Rest);
+  [{trading_session_id,V}] ++ to_fix44_body(Rest);
 
 to_fix44_body([{sess_sub_id, V}|Rest]) ->
-  [{ord_type,V}] ++ to_fix44_body(Rest);
+  [{trading_session_sub_id,V}] ++ to_fix44_body(Rest);
 
 to_fix44_body([{from_sessionid, _}|Rest]) -> to_fix44_body(Rest);
 to_fix44_body([{to_sessionid, _}|Rest]) -> to_fix44_body(Rest);
