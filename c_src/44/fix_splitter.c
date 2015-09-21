@@ -1,12 +1,12 @@
 #include <stdint.h>
 #include "erl_nif.h"
-#include <sys/mman.h>
+// #include <sys/mman.h>
 #include <fcntl.h>
-#include <sys/stat.h>
+// #include <sys/stat.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
-#include <unistd.h>
+// #include <unistd.h>
 #include <time.h>
 
 struct ValueDesc {
@@ -26,7 +26,7 @@ enum {READING_CODE, READING_INT, READING_DOUBLE, READING_BOOL, READING_STRING};
 
 enum CODE_TYPE {INT_CODE, BOOL_CODE, LENGTH_CODE, CHOICE_CODE} ;
 
-static inline int is_code(enum CODE_TYPE type, int code) {
+static __inline  int is_code(enum CODE_TYPE type, int code) {
   unsigned char *table;
   switch(type) {
     case INT_CODE:    table = INT_CODES; break;
