@@ -9,7 +9,7 @@
 -include("../include/secexchange.hrl").
 
 build_accept(#order{} = Order) ->
-  from_order(Order, accept, undefined).
+  from_order(Order, new, undefined).
 
 build_partial_fill(#order{} = Order) ->
   from_order(Order, trade, undefined).
@@ -38,7 +38,7 @@ from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = O
   {Price,MatchingOrderId} = case Order#order.matches of
     [{P, _Qtd, Other}|_] ->
          {#execreportprice{avg=0, last=P, price=Order#order.price}, Other};
-    _ -> {#execreportprice{}, undefined}
+    _ -> {#execreportprice{avg=0}, undefined}
   end,
 
   Qtd = #execreportqtd{order_qtd= Order#order.qtd,
@@ -48,7 +48,8 @@ from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = O
 
   Parties = [ #execparty{id="98",   source="D", role=36},
               #execparty{id="308",  source="D", role=7},
-              #execparty{id="BVMF", source="D", role=54} ],
+              % #execparty{id="BVMF", source="D", role=54} ],
+              #execparty{id="BVMF", source="D", role=4} ],
 
   ContraBrokers = [735],
 
@@ -113,7 +114,7 @@ to_fix44_body_price([]) -> [];
 to_fix44_body_price([{price,undefined}|Rest]) -> to_fix44_body_price(Rest);
 to_fix44_body_price([{price,Qtd}|Rest])       -> [{price, Qtd}] ++ to_fix44_body_price(Rest);
 to_fix44_body_price([{avg,undefined} | Rest]) -> to_fix44_body_price(Rest);
-to_fix44_body_price([{avg,Qtd} | Rest])       -> [{last_px, Qtd}] ++ to_fix44_body_price(Rest);
+to_fix44_body_price([{avg,Qtd} | Rest])       -> [{avg_px, Qtd}] ++ to_fix44_body_price(Rest);
 to_fix44_body_price([{last,undefined} | Rest])-> to_fix44_body_price(Rest);
 to_fix44_body_price([{last,Qtd} | Rest])      -> [{last_px, Qtd}] ++ to_fix44_body_price(Rest).
 
@@ -181,125 +182,6 @@ to_fix44_body([{Key, undefined} | Rest]) ->
 to_fix44_body([{Key, Val} | Rest]) ->
   [{Key, Val}] ++ to_fix44_body(Rest).
 
-
-% -record(execution_report, {
-%   trade_origination_date,
-%   exec_id,
-%   ord_type,
-%   price_type,
-%   price,
-%   stop_px,
-%   last_px,
-%   underlying_last_px,
-%   last_par_px,
-%   avg_px,
-%   day_avg_px,
-%   pegged_price,
-%   discretion_price,
-%   target_strategy,
-%   target_strategy_parameters,
-%   participation_rate,
-%   target_strategy_performance,
-%   currency,
-%   compliance_id,
-%   solicited_flag,
-%   time_in_force,
-%   effective_time,
-%   expire_date,
-%   expire_time,
-%   exec_inst,
-%   order_capacity,
-%   order_restrictions,
-%   cust_order_capacity,
-%   leaves_qty,
-%   cum_qty,
-%   last_qty,
-%   underlying_last_qty,
-%   last_spot_rate,
-%   last_forward_points,
-%   last_mkt,
-%   trading_session_id,
-%   trading_session_sub_id,
-%   time_bracket,
-%   last_capacity,
-%   day_order_qty,
-%   day_cum_qty,
-%   gt_booking_inst,
-%   trade_date,
-%   transact_time,
-%   report_to_exch,
-%   gross_trade_amt,
-%   num_days_interest,
-%   ex_date,
-%   accrued_interest_rate,
-%   accrued_interest_amt,
-%   interest_at_maturity,
-%   end_accrued_interest_amt,
-%   start_cash,
-%   end_cash,
-%   traded_flat_switch,
-%   basis_feature_date,
-%   basis_feature_price,
-%   concession,
-%   total_takedown,
-%   net_money,
-%   settl_curr_amt,
-%   settl_currency,
-%   settl_curr_fx_rate,
-%   settl_curr_fx_rate_calc,
-%   handl_inst,
-%   min_qty,
-%   max_floor,
-%   position_effect,
-%   max_show,
-%   booking_type,
-%   text,
-%   encoded_text,
-%   settl_date2,
-%   order_qty2,
-%   last_forward_points2,
-%   multi_leg_reporting_type,
-%   cancellation_rights,
-%   money_laundering_status,
-%   regist_id,
-%   designation,
-%   trans_bkd_time,
-%   exec_valuation_point,
-%   exec_price_type,
-%   exec_price_adjustment,
-%   priority_indicator,
-%   price_improvement,
-%   last_liquidity_ind,
-%   copy_msg_indicator,
-%   protection_price,
-%   unique_trade_id,
-%   security_trading_statusb,
-%   security_trading_statusc,
-%   fixed_rate,
-%   days_to_settlement,
-%   memo,
-%   appl_seq_num,
-%   app_id,
-%   order_category,
-%   aggressor_indicator,
-%   bts_final_tx_ord_status,
-%   contra_brokers = [],
-%   underlyings = [],
-%   cont_amts = [],
-%   legs = [],
-%   misc_fees = [],
-%   fields = []
-%   tag10100,
-%   tag10121,
-%   tag10130,
-%   tag10455,
-%   tag10645,
-%   tag10702,
-%   tag10703,
-% }).
-
-% record_to_proplist(#foo{} = Rec) ->
-%   lists:zip(record_info(fields, foo), tl(tuple_to_list(Rec))).
 
 
 %
