@@ -41,19 +41,32 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
   %           {sender_comp_id,<<"INIT">>},
   %           {target_comp_id,<<"ACCEPT">>}]
   % },
-  % ?DBG("logon ~p", [Logon#logon.fields, fix:dump(Bin)]),
-
-  NewState = send(logon,
-                  [ {reset_seq_num_flag, "Y"},
-                    {encrypt_method,0},
-                    {heart_bt_int, Logon#logon.heart_bt_int} ],
-                  Logon#logon.fields, State),
 
   Sender = proplists:get_value(sender_comp_id, Logon#logon.fields),
+  Seq = proplists:get_value(msg_seq_num, Logon#logon.fields),
+  ReqReset = Logon#logon.reset_seq_num_flag == <<"Y">>,
 
-  nexchange_fixsession_eventmgr:notify_session_authenticated(Sender, self()),
+  ShouldResetSeq =
+    if Seq == 1 ->
+        % expected valid session, so we register it
+        nexchange_fixsession_eventmgr:notify_session_authenticated(Sender, self()),
+        [];
+      % else, we ask for a new logon
+      true -> [{reset_seq_num_flag, "Y"}]
+    end,
 
-  handle_messages(Messages, Rest, NewState#state{authenticated=true, sessionid=Sender});
+  NewState =
+    if ReqReset == true -> State#state{our_seq=1};
+       true -> State
+    end,
+
+  ?DBG("logon ~n ~p Reply ~p ~n ~p ~n", [Logon#logon.fields, ShouldResetSeq, fix:dump(Bin)]),
+
+  NewState2 = send(logon,
+                  ShouldResetSeq ++ [ {encrypt_method,0}, {heart_bt_int, Logon#logon.heart_bt_int} ],
+                  Logon#logon.fields, NewState),
+
+  handle_messages(Messages, Rest, NewState2#state{authenticated=true, sessionid=Sender});
 
 
 handle_messages([{#logout{} = Logout,_}|_], _, #state{} = State) ->
