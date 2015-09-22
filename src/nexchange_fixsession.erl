@@ -57,9 +57,6 @@ handle_cast(_Request, State) ->
 
 handle_info({tcp, _Socket, Data}, #state{authenticated=false,prevbuffer=PrevBuf} = State) ->
   Buffer = <<PrevBuf/binary, Data/binary>>,
-  error_logger:info_msg("received logon? from socket ~p ~n", [Data]),
-  % expecting a logon message and only a logon message
-  % Logon = fix:decode(Data),
 
   {Messages, Rest} = fix_connection:decode_messages(Buffer),
 

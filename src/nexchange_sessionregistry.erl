@@ -77,7 +77,19 @@ handle_call(_Request, _From, State) ->
 
 handle_cast({register, Session, Pid}, State) ->
   Key = normalize(Session),
-  NewDict = dict:append(Key, Pid, State),
+  IsPresent = dict:is_key(Key, State),
+  NewDict =
+  if
+    IsPresent ->
+      List = dict:fetch(Key, State),
+      case lists:member(Pid, List) of
+        true -> State;
+        _ ->
+          dict:append(Key, Pid, State)
+      end;
+    true ->
+      dict:append(Key, Pid, State)
+  end,
   {noreply, NewDict};
 
 handle_cast({unregister, Session, Pid}, State) ->

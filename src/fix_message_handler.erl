@@ -35,32 +35,32 @@ handle_messages([{#resend_request{begin_seq_no=_BeginSeq,end_seq_no=_EndSeq} = M
 
 
 handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
-  % {logon,<<"20150912-21:51:02.065">>,0,30,undefined,undefined,
-  %          undefined,undefined,undefined,undefined,[],
-  %          [{msg_seq_num,2},
-  %           {sender_comp_id,<<"INIT">>},
-  %           {target_comp_id,<<"ACCEPT">>}]
-  % },
+
+  fix:crack(Logon),
+  ?DBG("logon bin ~n~p~n", [Bin]),
 
   Sender = proplists:get_value(sender_comp_id, Logon#logon.fields),
-  Seq = proplists:get_value(msg_seq_num, Logon#logon.fields),
-  ReqReset = Logon#logon.reset_seq_num_flag == <<"Y">>,
+  Seq    = proplists:get_value(msg_seq_num, Logon#logon.fields),
+  % RequestToReset = Logon#logon.reset_seq_num_flag == true,
 
-  ShouldResetSeq =
-    if Seq == 1 ->
-        % expected valid session, so we register it
-        nexchange_fixsession_eventmgr:notify_session_authenticated(Sender, self()),
-        [];
-      % else, we ask for a new logon
-      true -> [{reset_seq_num_flag, "Y"}]
+  {ShouldResetSeq, IsReset} =
+    if Seq /= 1 ->
+         % received a "reset" kind of logon message
+         { [{reset_seq_num_flag, "Y"}], true };
+       true ->
+         % this will actually force the initiator to re-logon with seq = 1
+         { [], false }
     end,
-
   NewState =
-    if ReqReset == true -> State#state{our_seq=1};
-       true -> State
+    if
+      IsReset -> State#state{our_seq=1, their_seq=1};
+      true -> State
     end,
 
-  ?DBG("logon ~n ~p Reply ~p ~n ~p ~n", [Logon#logon.fields, ShouldResetSeq, fix:dump(Bin)]),
+  nexchange_fixsession_eventmgr:notify_session_authenticated(Sender, self()),
+
+  % ?DBG("logon ~n ~p Reply ~p ~n ~p ~n", [Logon#logon.fields, {ShouldResetSeq,NewState,IsReset}, fix:dump(Bin)]),
+  ?DBG("logon received raw ~n~p~nIs reset? ~p~n",[fix:dump(Bin), IsReset]),
 
   NewState2 = send(logon,
                   ShouldResetSeq ++ [ {encrypt_method,0}, {heart_bt_int, Logon#logon.heart_bt_int} ],
@@ -95,6 +95,6 @@ send(MsgType, Body, Fields, #state{socket=Socket, our_seq=Seq} = State) ->
   % Reply = iolist_to_binary(ReplyBin),
   ok = gen_tcp:send(Socket, ReplyBin),
 
-  ?DBG("wrote to socket ~n ~p ~n ~p ~n ~p ~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]),
+  ?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]),
 
   State#state{our_seq=Seq + 1}.
