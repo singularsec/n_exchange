@@ -41,7 +41,7 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
 
   Sender   = proplists:get_value(sender_comp_id, Logon#logon.fields),
   TheirSeq = proplists:get_value(msg_seq_num, Logon#logon.fields),
-  RequestToReset = Logon#logon.reset_seq_num_flag == true,
+  % RequestToReset = Logon#logon.reset_seq_num_flag == true,
   HeartBtInterval = Logon#logon.heart_bt_int,
   AwaitingReply = State#state.sentlogonrequest,
 
@@ -56,7 +56,6 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
 
   MaybeNewState =
     if
-      RequestToReset -> State#state{our_seq=1};
       IsReset -> State#state{sentlogonrequest=true};
       true -> State
     end,
@@ -67,13 +66,14 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
   NewState = MaybeNewState#state{timer_ref=TimerRef, their_seq=TheirSeq},
 
   % ?DBG("logon ~n ~p Reply ~p ~n ~p ~n", [Logon#logon.fields, {ShouldResetSeq,NewState,IsReset}, fix:dump(Bin)]),
-  ?DBG("logon received raw ~n~p~nIs reset? ~p~n",[fix:dump(Bin), IsReset]),
+  % ?DBG("logon received raw ~n~p~nIs reset? ~p~n",[fix:dump(Bin), IsReset]),
 
   NewState2 =
     if
       AwaitingReply == false ->
-        send(logon, ShouldResetSeq ++ [{encrypt_method,0},
-                                       {heart_bt_int, Logon#logon.heart_bt_int}],
+        send(logon,
+             ShouldResetSeq ++ [{encrypt_method, 0},
+                                {heart_bt_int, Logon#logon.heart_bt_int}],
              Logon#logon.fields, NewState);
       true -> NewState#state{sentlogonrequest=false}
     end,
