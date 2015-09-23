@@ -16,7 +16,7 @@ handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = Sta
 
 
 handle_messages([{#order_cancel_request{} = CR,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("order_cancel_request ~n ~p", fix:crack(Order)),
+  % ?DBG("order_cancel_request ~n ~p", fix:crack(CR)),
   fix_order_message_handler:handle_order_cancel_request(CR, Messages, Rest, State);
 
 

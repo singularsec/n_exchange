@@ -18,6 +18,9 @@ build_full_fill(#order{} = Order) ->
   from_order(Order, trade, undefined).
 
 build_cancel(#order{} = Order, Reason) ->
+  from_order(Order, canceled, Reason);
+
+build_cancel(#order_cancel_request{} = Order, Reason) ->
   from_order(Order, canceled, Reason).
 
 build_rejection(#order{} = Order, Reason) ->
@@ -30,6 +33,58 @@ report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId}
   Body = to_fix44_body(ReportPropList),
   error_logger:info_msg("Body ~p ~n", [Body]),
   fix:pack(execution_report, Body, Seq, DestSessId, FromSessId).
+
+
+from_order(#order_cancel_request{} = Order,
+           ExecType, _Reason) ->
+
+  NewId = erlang:unique_integer([positive]),
+
+  % 35=F | 34=2094 | 1=307011 | 11=32543_1 | 38=100 | 41=32543_0 | 54=1 | 55=PETR4 | 60=20150716-14:51:14
+  %  | 453=3 | 448=98 | 447=D | 452=36
+  %          | 448=308 | 447=D | 452=7
+  %          | 448=BVMF | 447=D | 452=54
+
+  % 35=8 | 34=1332 | 1=307011 | 6=0 | 11=32543_1 | 14=0 | 17=82249:74557 | 37=8244561958
+  %      | 38=100 | 39=4 | 40=2 | 41=32543_0 | 44=11 | 54=1 | 55=PETR4
+  %      | 59=0 | 60=20150716-14:51:14.429 | 75=20150716 | 150=4 | 151=0
+  %      | 198=8254423000
+  %      | 453=3
+  %       | 448=98 | 447=D | 452=36
+  %       | 448=308 | 447=D | 452=7
+  %       | 448=BVMF | 447=D | 452=54
+
+  Fields     = Order#order_cancel_request.fields,
+  FromSessId = proplists:get_value(target_comp_id, Fields),
+  DestSessId = proplists:get_value(sender_comp_id, Fields),
+  Symbol     = proplists:get_value(symbol, Fields),
+
+  Parties = fix_utils:extract_parties(Fields),
+
+  #execreport{order_id = Order#order_cancel_request.order_id,
+             exec_id = NewId,
+             exec_type = ExecType,
+             account = Order#order_cancel_request.account,
+             order_status = canceled,
+             order_type = limit,
+             time_in_force = day,
+             cl_ord_id = Order#order_cancel_request.cl_ord_id,
+             orig_cl_ord_id= Order#order_cancel_request.orig_cl_ord_id,
+             symbol = Symbol,
+             side = Order#order_cancel_request.side,
+             % transact_time= % 60=20150716-14:51:11.152 |  TransactTime
+             % trade_date= ,% 75=20150716 |    <--- TradeDate
+             qtd = #execreportqtd{order_qtd= 0,
+                                  last= 0,
+                                  leaves= 10,
+                                  cum= 0},
+             price = #execreportprice{avg=0},
+             contrabrokers = [735],
+             parties = Parties,
+            %  text = Reason,
+             from_sessionid = FromSessId,
+             to_sessionid = DestSessId
+             };
 
 
 from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = Order,
@@ -46,10 +101,11 @@ from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = O
                        leaves= Order#order.qtd_left,
                        cum= Order#order.qtd_filled},
 
-  Parties = [ #execparty{id="98",   source="D", role=36},
-              #execparty{id="308",  source="D", role=7},
-              % #execparty{id="BVMF", source="D", role=54} ],
-              #execparty{id="BVMF", source="D", role=4} ],
+  % Parties = [ #execparty{id="98",   source="D", role=36},
+  %             #execparty{id="308",  source="D", role=7},
+  %             % #execparty{id="BVMF", source="D", role=54} ],
+  %             #execparty{id="BVMF", source="D", role=4} ],
+  Parties = Order#order.parties,
 
   ContraBrokers = [735],
 

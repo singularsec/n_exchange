@@ -20,7 +20,8 @@
                 to_sessionid,
                 id,
                 oid,  % used for sorting only!
-                matches=[]
+                matches=[],
+                parties=[]
                 }).
 
 -record(orderbook, {sells=[], buys=[]}).
