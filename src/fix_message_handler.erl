@@ -42,6 +42,7 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
   Sender = proplists:get_value(sender_comp_id, Logon#logon.fields),
   Seq    = proplists:get_value(msg_seq_num, Logon#logon.fields),
   % RequestToReset = Logon#logon.reset_seq_num_flag == true,
+  HeartBtInterval = Logon#logon.heart_bt_int,
 
   {ShouldResetSeq, IsReset} =
     if Seq /= 1 ->
@@ -51,13 +52,18 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
          % this will actually force the initiator to re-logon with seq = 1
          { [], false }
     end,
+
   NewState =
     if
-      IsReset -> State#state{our_seq=1, their_seq=1};
-      true -> State
+      IsReset ->
+        State#state{our_seq=1, their_seq=1};
+      true ->
+        % send_interval(Time, Message) -> {ok, TRef} | {error, Reason}
+        Msg = {'$gen_cast', {send_heartbeat, Logon#logon.fields}},
+        TimerRef = timer:send_interval(HeartBtInterval * 1000, Msg),
+        nexchange_fixsession_eventmgr:notify_session_authenticated(Sender, self()),
+        State#state{timer_ref=TimerRef}
     end,
-
-  nexchange_fixsession_eventmgr:notify_session_authenticated(Sender, self()),
 
   % ?DBG("logon ~n ~p Reply ~p ~n ~p ~n", [Logon#logon.fields, {ShouldResetSeq,NewState,IsReset}, fix:dump(Bin)]),
   ?DBG("logon received raw ~n~p~nIs reset? ~p~n",[fix:dump(Bin), IsReset]),
@@ -69,8 +75,10 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
   handle_messages(Messages, Rest, NewState2#state{authenticated=true, sessionid=Sender});
 
 
-handle_messages([{#logout{} = Logout,_}|_], _, #state{} = State) ->
+handle_messages([{#logout{} = Logout,_}|_], _, #state{socket=Socket} = State) ->
   ?DBG("logout ~p", Logout),
+
+  gen_tcp:close(Socket),
 
   % kill this process
   {stop, normal, State};

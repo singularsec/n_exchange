@@ -6,6 +6,7 @@
 
 -behaviour(gen_server).
 
+-include("log.hrl").
 -include("../include/fix_session.hrl").
 -include("../include/admin44.hrl").
 -include("../include/business44.hrl").
@@ -40,6 +41,13 @@ init(Socket) ->
 
 handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.
+
+
+handle_cast({send_heartbeat, Fields}, #state{our_seq=Seq} = State) ->
+  ?DBG("sending heartbeat ~p ~n", [Seq]),
+  NewState = fix_message_handler:send(heartbeat, [], Fields, State),
+  {noreply, NewState};
+
 
 handle_cast({send, #execreport{} = Report},
             #state{socket=Socket, our_seq=Seq} = State) ->

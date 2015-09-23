@@ -7,5 +7,6 @@
                 prevbuffer=[],
                 their_seq,
                 our_seq,
-                sessionid
+                sessionid,
+                timer_ref
                 }).
