@@ -39,13 +39,14 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
   fix:crack(Logon),
   ?DBG("logon bin ~n~p~n", [Bin]),
 
-  Sender = proplists:get_value(sender_comp_id, Logon#logon.fields),
-  Seq    = proplists:get_value(msg_seq_num, Logon#logon.fields),
-  % RequestToReset = Logon#logon.reset_seq_num_flag == true,
+  Sender   = proplists:get_value(sender_comp_id, Logon#logon.fields),
+  TheirSeq = proplists:get_value(msg_seq_num, Logon#logon.fields),
+  RequestToReset = Logon#logon.reset_seq_num_flag == true,
   HeartBtInterval = Logon#logon.heart_bt_int,
+  AwaitingReply = State#state.sentlogonrequest,
 
   {ShouldResetSeq, IsReset} =
-    if Seq /= 1 ->
+    if TheirSeq /= 1 ->
          % received a "reset" kind of logon message
          { [{reset_seq_num_flag, "Y"}], true };
        true ->
@@ -53,24 +54,29 @@ handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
          { [], false }
     end,
 
-  NewState =
+  MaybeNewState =
     if
-      IsReset ->
-        State#state{our_seq=1, their_seq=1};
-      true ->
-        % send_interval(Time, Message) -> {ok, TRef} | {error, Reason}
-        Msg = {'$gen_cast', {send_heartbeat, Logon#logon.fields}},
-        TimerRef = timer:send_interval(HeartBtInterval * 1000, Msg),
-        nexchange_fixsession_eventmgr:notify_session_authenticated(Sender, self()),
-        State#state{timer_ref=TimerRef}
+      RequestToReset -> State#state{our_seq=1};
+      IsReset -> State#state{sentlogonrequest=true};
+      true -> State
     end,
+
+  Msg = {'$gen_cast', {send_heartbeat, Logon#logon.fields}},
+  {ok,TimerRef} = timer:send_interval(HeartBtInterval * 1000, Msg),
+  nexchange_fixsession_eventmgr:notify_session_authenticated(Sender, self()),
+  NewState = MaybeNewState#state{timer_ref=TimerRef, their_seq=TheirSeq},
 
   % ?DBG("logon ~n ~p Reply ~p ~n ~p ~n", [Logon#logon.fields, {ShouldResetSeq,NewState,IsReset}, fix:dump(Bin)]),
   ?DBG("logon received raw ~n~p~nIs reset? ~p~n",[fix:dump(Bin), IsReset]),
 
-  NewState2 = send(logon,
-                  ShouldResetSeq ++ [ {encrypt_method,0}, {heart_bt_int, Logon#logon.heart_bt_int} ],
-                  Logon#logon.fields, NewState),
+  NewState2 =
+    if
+      AwaitingReply == false ->
+        send(logon, ShouldResetSeq ++ [{encrypt_method,0},
+                                       {heart_bt_int, Logon#logon.heart_bt_int}],
+             Logon#logon.fields, NewState);
+      true -> NewState#state{sentlogonrequest=false}
+    end,
 
   handle_messages(Messages, Rest, NewState2#state{authenticated=true, sessionid=Sender});
 

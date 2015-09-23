@@ -8,5 +8,6 @@
                 their_seq,
                 our_seq,
                 sessionid,
-                timer_ref
+                timer_ref,
+                sentlogonrequest=false
                 }).
