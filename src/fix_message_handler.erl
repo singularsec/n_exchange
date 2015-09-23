@@ -15,6 +15,11 @@ handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = Sta
   fix_order_message_handler:handle_new_order_single(Order, Messages, Rest, State);
 
 
+handle_messages([{#order_cancel_request{} = CR,_}|Messages], Rest, #state{} = State) ->
+  ?DBG("order_cancel_request ~n ~p", fix:crack(Order)),
+  fix_order_message_handler:handle_order_cancel_request(CR, Messages, Rest, State);
+
+
 handle_messages([{#heartbeat{} = Hb,_}|Messages], Rest, #state{} = State) ->
   % ?DBG("heartbeat ~p", Hb#heartbeat.fields),
   Ts = erlang:timestamp(),
@@ -91,7 +96,7 @@ handle_messages([{#logout{} = Logout,_}|_], _, #state{socket=Socket} = State) ->
 
 
 handle_messages([{Msg,_Bin}|Messages], Rest, #state{} = State) ->
-  ?DBG("unhandled ~p", Msg),
+  ?DBG("unhandled ~n~p~n~p~n~p~n~p~n", Msg),
   handle_messages(Messages, Rest, State);
 
 

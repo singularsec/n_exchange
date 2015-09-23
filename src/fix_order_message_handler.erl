@@ -8,6 +8,33 @@
 -include("../include/business44.hrl").
 -include("../include/secexchange.hrl").
 
+handle_order_cancel_request(#order_cancel_request{} = Order, Messages, Rest, #state{} = State) ->
+  % 35=F | 34=2 | 49=CCLRA301 | 52=20150923-02:02:02.571 | 56=OE101 | 1=2610 |
+  % 11=4089_0 | 38=100 | 41=4089 | 54=1 | 55=PETR4 | 60=20150923-02:01:52 |
+  % 453=3 | 448=CCLRA301 | 447=D | 452=36 | 448=308 | 447=D | 452=7 | 448=DMA1 | 447=D | 452=54
+
+ %  {order_cancel_request,
+ % <<"20150923-02:02:02.571">>, <<"4089">>, undefined, <<"4089_0">>, undefined,  undefined, undefined,  undefined,
+ % <<"2610">>, undefined, undefined,
+ % buy, <<"20150923-02:01:52">>, undefined, undefined, undefined,[],
+ % [{msg_seq_num,2},
+ %  {sender_comp_id, <<"CCLRA301">>},
+ %  {target_comp_id, <<"OE101">>},
+ %  {order_qty,100}, {symbol, <<"PETR4">>},
+ %  {no_party_ids,3},
+ %  {party_id,    <<"CCLRA301">>},
+ %  {party_id_source, propcode},
+ %  {party_role,36},
+ %  {party_id, <<"308">>},
+ %  {party_id_source, propcode},
+ %  {party_role,7},
+ %  {party_id, <<"DMA1">>},
+ %  {party_id_source,propcode},
+ %  {party_role,54}]}]
+
+
+  fix_message_handler:handle_messages(Messages, Rest, State).
+
 
 handle_new_order_single(#new_order_single{} = Order, Messages, Rest, #state{} = State) ->
   % [ {msg_seq_num,9}, {sender_comp_id, <<"INIT">>},
