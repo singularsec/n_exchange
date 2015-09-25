@@ -7,7 +7,7 @@
 % API
 
 -export([start_link/1]).
--export([ping/1, send_new_order_single/2, modify_order/2, cancel_order/2]).
+-export([ping/1, send_new_order_single/2, modify_order/2, cancel_order/2, dump_book/1]).
 
 % Callback
 
@@ -30,6 +30,9 @@ modify_order(BookPid, #order{} = Order) when is_pid(BookPid) ->
 cancel_order(BookPid, #order{} = Order) when is_pid(BookPid) ->
   gen_server:cast(BookPid, {cancel_order, Order}).
 
+dump_book(BookPid) when is_pid(BookPid) ->
+  gen_server:call(BookPid, dump_book).
+
 
 % -spec start_link(any())->{ok,pid()} | ignore | {error,any()}.
 start_link(Symbol) ->
@@ -46,6 +49,10 @@ init(Symbol) ->
 
 handle_call(ping, _From, State) ->
 	{reply, pong, State};
+
+handle_call(dump_book, _From, #state{book=Book} = State) ->
+  Reply = n_orderbook:dump(Book),
+  {reply, Reply, State};
 
 handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.

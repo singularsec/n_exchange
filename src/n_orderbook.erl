@@ -3,7 +3,7 @@
 -ifdef(EUNIT).
 -compile(export_all).
 -else.
--export([create/1, add_new_order_single/2]).
+-export([create/1, add_new_order_single/2, dump/1]).
 -endif.
 
 -include("../include/secexchange.hrl").
@@ -24,6 +24,24 @@ change_order(#order{} = Order, Book) ->
 
 cancel_order(#order{} = Order, Book) ->
   ok.
+
+pretty_print_order(#order{qtd_filled=Filled,
+            qtd_left=Left,
+            qtd_last=Last,
+            price=Price,
+            order_status=St,
+            order_type=Ty,
+            side=Sd,
+            account=Ac,
+            id=Id} = Order) ->
+  [{id, Id}, {side, Sd}, {price, Price/10000},
+   {type, Ty}, {status, St}, {acc, Ac}, {qtd, Filled, Left, Last}].
+
+dump(#orderbook{buys=BuysT, sells=SellsT}) ->
+  Collector = fun (Item, Acc) -> [pretty_print_order(Item)] ++ Acc end,
+  Buys  = traverse_ets_table(BuysT,  nil, Collector, []),
+  Sells = traverse_ets_table(SellsT, nil, Collector, []),
+  {Buys, Sells}.
 
 add_new_order_single(#order{} = Order, Book) ->
   SupportedOrderTypes = [ limit, market, stop, stoplimit, marketwithleftoverlimit ],
@@ -56,7 +74,9 @@ insert_order(#order{side=_OtherSide} = Order, Book) ->
 insert_order_into(#order{price=Price, qtd=Qtd, side=Side} = Order, Table) ->
   NormalizedPrice = normalize_price(Price),
   {Key, Time} = compose_key(Price, Side),
+  UniqueId = erlang:unique_integer([positive]),
   NewOrder = Order#order{oid=Key,
+                         id=integer_to_list(UniqueId),
                          time=Time,
                          order_status=new,
                          qtd_filled=0, qtd_left=Qtd, qtd_last=0,
@@ -201,7 +221,7 @@ partial_fill_order(Order, Book) ->
   send_partial_fill_notification(Order),
   Order.
 
-complete_order(#order{id=Key, side=Side} = Order, Book) ->
+complete_order(#order{oid=Key, side=Side} = Order, Book) ->
   remove_from_ets(Order, Book),
   send_filled_notification(Order),
   Order.
@@ -220,10 +240,10 @@ cancel_order(Order, Reason, Book) ->
 
 % ----- ets tables
 
-replace_in_ets(#order{id=Key, side=Side} = Order, Book) ->
+replace_in_ets(#order{oid=Key, side=Side} = Order, Book) ->
   true = ets:insert(get_table(Side, Book), Order).
 
-remove_from_ets(#order{id=Key, side=Side} = Order, Book) ->
+remove_from_ets(#order{oid=Key, side=Side} = Order, Book) ->
   true = ets:delete(get_table(Side, Book), Key).
 
 % ----- Events that generate Execution reports
