@@ -26,8 +26,7 @@ nexchange_trading_book:send_new_order_single(Petro, #order{symbol="PETR4",
                 price=10,
                 side=sell,
                 order_type=limit, timeinforce=day,
-                account="acc1", from_sessionid="CCLR", to_sessionid="SOME"
-                }).
+                account="acc1", from_sessionid="CCLR", to_sessionid="SOME"}).
 
 
 -- Adds a buy Order
@@ -39,5 +38,4 @@ nexchange_trading_book:send_new_order_single(Petro, #order{symbol="PETR4",
                 price=10,
                 side=buy,
                 order_type=limit,timeinforce=day,account="acc2",
-                from_sessionid="CCLR",to_sessionid="SOME"
-                }).
+                from_sessionid="CCLR",to_sessionid="SOME"}).
