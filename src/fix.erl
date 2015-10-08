@@ -109,7 +109,11 @@ dump(Bin) ->
 
 -spec now() -> string().
 now() ->
-  timestamp(to_date_ms( erlang:timestamp() )).
+  {_Mega, _Sec, Micro} = erlang:timestamp(),
+  Milli = Micro div 1000,
+  {{YY,MM,DD}, {H,M,S}} = calendar:universal_time(),
+  % timestamp(to_date_ms( Ts )).
+  timestamp( {{YY,MM,DD}, {H,M,S,Milli}} ).
 
 timestamp({{YY,MM,DD},{H,M,S,Milli}}) ->
   % 20120529-10:40:17.578
