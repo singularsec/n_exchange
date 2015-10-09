@@ -7,9 +7,15 @@
 
 setup_handlers() ->
   ok = gen_event:add_handler(nexchange_trading_book_eventmgr, nexchange_fixsession_dispatcher_handler, []),
+  ok = gen_event:add_handler(nexchange_trading_book_eventmgr, pub_to_receiver_handler, []),
+
   % ok = gen_event:add_handler(nexchange_trading_book_eventmgr, nexchange_fillbook_handler, []),
   % ok = gen_event:add_handler(nexchange_trading_book_eventmgr, nexchange_book_logger_handler, []),
   ok.
+
+notify_trade(TradeInfo) ->
+    error_logger:info_msg("notify_trade ~n ~p ~n", [TradeInfo]),
+    gen_event:notify(nexchange_trading_book_eventmgr, {new_trade, TradeInfo}).    
 
 -spec notify_accept('order') -> ok.
 notify_accept(Order) ->

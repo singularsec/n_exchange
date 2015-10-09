@@ -17,25 +17,13 @@ create(Symbol) ->
   SellTName = list_to_atom( atom_to_list(sell) ++ "_" ++ Symbol ),
   BuysT  = ets:new(BuyTName,  [ordered_set, {keypos, #order.oid}]),
   SellsT = ets:new(SellTName, [ordered_set, {keypos, #order.oid}]),
-  #orderbook{sells=SellsT, buys=BuysT}.
+  #orderbook{sells=SellsT, buys=BuysT, lasttrade=0}.
 
 change_order(#order{} = Order, Book) ->
   ok.
 
 cancel_order(#order{} = Order, Book) ->
   ok.
-
-pretty_print_order(#order{qtd_filled=Filled,
-            qtd_left=Left,
-            qtd_last=Last,
-            price=Price,
-            order_status=St,
-            order_type=Ty,
-            side=Sd,
-            account=Ac,
-            id=Id} = Order) ->
-  [{id, Id}, {side, Sd}, {price, Price/10000},
-   {type, Ty}, {status, St}, {acc, Ac}, {qtd, Filled, Left, Last}].
 
 dump(#orderbook{buys=BuysT, sells=SellsT}) ->
   Collector = fun (Item, Acc) -> [pretty_print_order(Item)] ++ Acc end,
@@ -189,6 +177,8 @@ execute_plan(#order{qtd_filled=Filled,qtd_left=LeavesQtd}=Order, [MatchedOrder|R
   record_match(NewMatchedOrder, Book),
   record_match(NewOrder, Book),
 
+  notify_trade(NewMatchedOrder, NewOrder, HowMany, MatchPrice),
+
   execute_plan(NewOrder, Rest, Book).
 
 
@@ -249,26 +239,39 @@ remove_from_ets(#order{oid=Key, side=Side} = Order, Book) ->
 % ----- Events that generate Execution reports
 
 send_accept_notification(Order) ->
-  nexchange_trading_book_eventmgr:notify_accept(Order).
+    nexchange_trading_book_eventmgr:notify_accept(Order).
 
 send_reject_notification(Order, Reason) ->
-  nexchange_trading_book_eventmgr:notify_rejection(Order, Reason).
+    nexchange_trading_book_eventmgr:notify_rejection(Order, Reason).
 
 send_cancel_notification(Order, Reason) ->
-  nexchange_trading_book_eventmgr:notify_cancel(Order, Reason).
+    nexchange_trading_book_eventmgr:notify_cancel(Order, Reason).
 
 send_filled_notification(Order) ->
-  nexchange_trading_book_eventmgr:notify_fill(Order).
+    nexchange_trading_book_eventmgr:notify_fill(Order).
 
 send_partial_fill_notification(Order) ->
-  nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+    nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+
+notify_trade(MatchedOrder = #order{id=RefId, symbol=Symbol, from_sessionid=To},
+             Order = #order{from_sessionid=From},
+             HowMany, MatchPrice) ->
+
+    Trade = #tradeinfo{symbol=Symbol,
+                       refid=RefId,
+                       price=MatchPrice,
+                       qtd=HowMany,
+                       buyer=From,
+                       seller=To},
+
+    nexchange_trading_book_eventmgr:notify_trade(Trade).
 
 % ----- Utility functions
 
 normalize_price(Price) when is_atom(Price) -> 0;
 normalize_price(Price) when is_number(Price) ->
-  % remove 4 decimals by multipling by 10000
-  round(Price * 10000). % round converts it back to integer
+    % remove 4 decimals by multipling by 10000
+    round(Price * 10000). % round converts it back to integer
 
 traverse_ets_table(Table, Key, Collector, State) ->
   KeyToUse = case Key of
@@ -305,6 +308,18 @@ compose_key(Price, buy) ->
   Res = (Price * -100000000000000000) + Now,
   {Res, Now}.
 
+pretty_print_order(#order{qtd_filled=Filled,
+          qtd_left=Left,
+          qtd_last=Last,
+          price=Price,
+          order_status=St,
+          order_type=Ty,
+          side=Sd,
+          account=Ac,
+          id=Id} = Order) ->
+
+    [{id, Id}, {side, Sd}, {price, Price/10000},
+    {type, Ty}, {status, St}, {acc, Ac}, {qtd, Filled, Left, Last}].
 
 
 

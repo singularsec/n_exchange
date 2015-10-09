@@ -24,7 +24,7 @@
                 parties=[]
                 }).
 
--record(orderbook, {sells=[], buys=[]}).
+-record(orderbook, {sells=[], buys=[], lasttrade=0}).
 
 -record(fillbook,  {sells=[], buys=[]}).
 
@@ -54,4 +54,11 @@
                      sess_sub_id=17,
                      from_sessionid,
                      to_sessionid
+                    }).
+
+-record(tradeinfo, {symbol,
+                    refid,
+                    price,
+                    qtd,
+                    buyer, seller
                     }).

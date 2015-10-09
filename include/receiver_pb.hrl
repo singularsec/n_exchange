@@ -10,7 +10,8 @@
     netchgprevday,
     variation,
     volume,
-    condition
+    condition,
+    symbol
 }).
 -endif.
 

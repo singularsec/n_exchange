@@ -19,4 +19,5 @@ message PriceChangeAckSimpleMessage {
   optional float Variation  = 8;
   optional float Volume  = 9;
   optional string Condition = 10;
+  optional string Symbol = 11;
 }

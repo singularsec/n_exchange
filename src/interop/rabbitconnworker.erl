@@ -34,10 +34,15 @@ send_to_receiver(Payload) ->
 % Callback
 
 init(_Args) ->
-    Params = #amqp_params_network{username     = <<"clear">>,
-                                  password     = <<"clear">>,
-                                  virtual_host = <<"clear_dev">>,
-                                  host         = "localhost",
+    {ok, host}  = application:get_env(nexchange, rabbitmq_host),
+    {ok, vhost} = application:get_env(nexchange, rabbitmq_vhost),
+    {ok, user}  = application:get_env(nexchange, rabbitmq_user),
+    {ok, pwd}   = application:get_env(nexchange, rabbitmq_pwd),
+
+    Params = #amqp_params_network{username     = user,
+                                  password     = pwd,
+                                  virtual_host = vhost,
+                                  host         = host,
                                   port         = 5672
                                   },
     %% Start a network connection
@@ -61,11 +66,11 @@ handle_cast({send_to_receiver, Payload}, State = #state{channel = Channel}) ->
     },
 
     % -record('P_basic', {
-    % content_type, content_encoding, headers, delivery_mode,
-    % priority, correlation_id, reply_to,
-    % expiration, message_id, timestamp, type,
-    %  user_id, app_id, cluster_id}).
+    %    content_type, content_encoding, headers, delivery_mode,
+    %    priority, correlation_id, reply_to,
+    %    expiration, message_id, timestamp, type, user_id, app_id, cluster_id}).
 
+    % http://stackoverflow.com/questions/19408705/how-to-use-message-headers-in-rabbitmqs-erlang-client
     StringHeader = {<<"protobuf">>, short, 1},
 
     Props = #'P_basic'{
