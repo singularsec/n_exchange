@@ -1,0 +1,22 @@
+// type:	Clear.Foundation.Quotes.Messages.PriceChangeAckSimpleMessage, Clear.Foundation.Quotes.Messages
+// type:	Clear.Foundation.Quotes.Messages.AnnounceNewStockMessage, Clear.Foundation.Quotes.Messages
+// delivery_mode:	2
+// headers: protobuf:	1
+
+message PriceChangeAckSimpleMessage {
+  optional string RefId = 1;
+  optional float Price  = 2;
+  optional float Quantity = 3;
+  optional string Buyer = 4;
+  optional string Seller = 5;
+  enum TickDirection {
+      None=0;
+    	Up=1;
+    	Down=2;
+  }
+  optional TickDirection Direction = 6;
+  optional float NetChgPrevDay = 7;
+  optional float Variation  = 8;
+  optional float Volume  = 9;
+  optional string Condition = 10;
+}
