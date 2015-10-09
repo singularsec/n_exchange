@@ -10,6 +10,8 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+    application:start(rabbit_common),
+
     % case nexchange_sup:start_link() of
     Res = nexchange_sup_sup:start_link(),
     % nexchange_sup_sup:start_stuff(),

@@ -55,6 +55,10 @@ init(_Args) ->
                       {nexchange_sessionregistry, start_link, []},
                       permanent, ShutdownTime, worker, [nexchange_sessionregistry]},
 
+  RabbitConnSpec   = {rabbitconnworker,
+                      {rabbitconnworker, start_link, []},
+                      permanent, ShutdownTime, worker, [rabbitconnworker]},
+
   MaxRestart = 6,
   MaxTime = 3000,
 
@@ -64,6 +68,7 @@ init(_Args) ->
            BookRegistrySpec,
            FixSupSpec,
            TcpAcceptorSpec,
-           TradingSupSpec],
+           TradingSupSpec,
+           RabbitConnSpec],
 
   {ok, {{one_for_one, MaxRestart, MaxTime}, Specs}}.
