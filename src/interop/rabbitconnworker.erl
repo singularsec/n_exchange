@@ -34,17 +34,20 @@ send_to_receiver(Payload) ->
 % Callback
 
 init(_Args) ->
-    {ok, host}  = application:get_env(nexchange, rabbitmq_host),
-    {ok, vhost} = application:get_env(nexchange, rabbitmq_vhost),
-    {ok, user}  = application:get_env(nexchange, rabbitmq_user),
-    {ok, pwd}   = application:get_env(nexchange, rabbitmq_pwd),
+    {ok, Host}  = application:get_env(nexchange, rabbitmq_host),
+    {ok, Vhost} = application:get_env(nexchange, rabbitmq_vhost),
+    {ok, User}  = application:get_env(nexchange, rabbitmq_user),
+    {ok, Pwd}   = application:get_env(nexchange, rabbitmq_pwd),
 
-    Params = #amqp_params_network{username     = user,
-                                  password     = pwd,
-                                  virtual_host = vhost,
-                                  host         = host,
+    error_logger:error_msg("params ~p ~n", [Host, Vhost, User, Pwd]),
+
+    Params = #amqp_params_network{username     = User,
+                                  password     = Pwd,
+                                  virtual_host = Vhost,
+                                  host         = Host,
                                   port         = 5672
                                   },
+
     %% Start a network connection
     {ok, Connection} = amqp_connection:start(Params),
     %% Open a channel on the connection

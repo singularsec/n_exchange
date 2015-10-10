@@ -13,19 +13,6 @@
 
 % Callback
 
-% -record(pricechangeacksimplemessage, {
-%     refid,
-%     price,
-%     quantity,
-%     buyer,
-%     seller,
-%     direction,
-%     netchgprevday,
-%     variation,
-%     volume,
-%     condition, symbol
-% }).
-
 % simple_pb:encode_person({person, <<"Nick">>, <<"Mountain View">>,
 %     <<"+1 (000) 555-1234">>,25, undefined}).
 % https://github.com/basho/erlang_protobuffs
@@ -40,19 +27,22 @@ handle_event({new_trade, #tradeinfo{symbol=Symbol, refid=Id, price=Price,
 
     Rec = #pricechangeacksimplemessage{ symbol=l(Symbol),
                                         refid=l(Id),
-                                        price=Price,
-                                        quantity=Qtd,
+                                        price=Price / 10000.0,
+                                        quantity=Qtd / 1.0,
                                         buyer=l(Buyer),
                                         seller=l(Seller),
-                                        direction=1,
+                                        direction='Up',
                                         netchgprevday=1.0,
                                         variation=2.0,
                                         volume=2.0,
                                         condition=l("L") },
 
-    Payload = receiver_pb:encode_pricechangeacksimplemessage(Rec),
+    % error_logger:error_msg("record ~p ~n", [Rec]),
 
-    rabbitconnworker:send_to_receiver(Payload),
+    % stupid protobuffs implementation doesnt accept records
+    Payload = receiver_pb2:encode_pricechangeacksimplemessage(Rec),
+
+    rabbitconnworker:send_to_receiver(iolist_to_binary(Payload)),
 
     {ok, State};
 
@@ -60,11 +50,11 @@ handle_event(_Event, State) ->
     {ok, State}.
 
 handle_call(_Request, State) ->
-    error_logger:error_msg("Unexpected call on nexchange_fixsession_dispatcher_handler ~p ~n", [_Request]),
+    error_logger:error_msg("Unexpected call on pub_to_receiver_handler ~p ~n", [_Request]),
     {ok, unimplemented, State}.
 
 handle_info(_Info, State) ->
-    error_logger:error_msg("Unexpected eventinfo on nexchange_fixsession_dispatcher_handler ~p ~n", [_Info]),
+    error_logger:error_msg("Unexpected eventinfo on pub_to_receiver_handler ~p ~n", [_Info]),
     {ok, State}.
 
 terminate(_Arg, _State) ->
