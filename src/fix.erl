@@ -20,6 +20,10 @@ crack(#new_order_single{} = NOS) ->
   Prop = record_to_proplist(NOS),
   ?DBG("new_order_single ~n ~p ~n", [Prop]);
 
+crack(#order_cancel_request{} = NOS) ->
+  Prop = record_to_proplist(NOS),
+  ?DBG("order_cancel_request ~n ~p ~n", [Prop]);
+
 crack(#logon{} = NOS) ->
   Prop = record_to_proplist(NOS),
   ?DBG("logon ~n ~p ~n", [Prop]).

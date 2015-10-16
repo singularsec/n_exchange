@@ -14,20 +14,19 @@ handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = Sta
   ?DBG("new_order_single ~n ~p", fix:crack(Order)),
   fix_order_message_handler:handle_new_order_single(Order, Messages, Rest, State);
 
-
 handle_messages([{#order_cancel_request{} = CR,_}|Messages], Rest, #state{} = State) ->
-  % ?DBG("order_cancel_request ~n ~p", fix:crack(CR)),
+  ?DBG("order_cancel_request ~n ~p", fix:crack(CR)),
   fix_order_message_handler:handle_order_cancel_request(CR, Messages, Rest, State);
 
-
-handle_messages([{#heartbeat{} = Hb,_}|Messages], Rest, #state{} = State) ->
-  % ?DBG("heartbeat ~p", Hb#heartbeat.fields),
+handle_messages([{#heartbeat{} = _Hb,_}|Messages], Rest, #state{} = State) ->
+  % ?DBG("heartbeat ~p", _Hb#heartbeat.fields),
   Ts = erlang:timestamp(),
   handle_messages(Messages, Rest, State#state{lastheartbeat=Ts});
 
 
 handle_messages([{#test_request{test_req_id=ReqId} = Tr,_}|Messages], Rest, #state{} = State) ->
   % ?DBG("test_request ~p", Tr),
+  ?DBG("resend_request ~p", Tr),
   NewState = send(heartbeat, [{test_req_id,ReqId}], Tr#test_request.fields, State),
   handle_messages(Messages, Rest, NewState);
 
@@ -114,6 +113,6 @@ send(MsgType, Body, Fields, #state{socket=Socket, our_seq=Seq} = State) ->
   % Reply = iolist_to_binary(ReplyBin),
   ok = gen_tcp:send(Socket, ReplyBin),
 
-  ?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]),
+  % ?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]),
 
   State#state{our_seq=Seq + 1}.
