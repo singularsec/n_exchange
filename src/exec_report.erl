@@ -92,7 +92,7 @@ from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = O
 
   {Price,MatchingOrderId} = case Order#order.matches of
     [{P, _Qtd, Other}|_] ->
-         {#execreportprice{avg=0, last=P, price=Order#order.price / 10000.0}, Other};
+         {#execreportprice{avg=0, last=P, price=Order#order.price}, Other};
     _ -> {#execreportprice{avg=0}, undefined}
   end,
 
@@ -168,11 +168,11 @@ to_fix44_body_qtd([{_, _} | Rest])             -> to_fix44_body_qtd(Rest).
 %   avg_px,
 to_fix44_body_price([]) -> [];
 to_fix44_body_price([{price,undefined}|Rest]) -> to_fix44_body_price(Rest);
-to_fix44_body_price([{price,Qtd}|Rest])       -> [{price, Qtd}] ++ to_fix44_body_price(Rest);
+to_fix44_body_price([{price, P}|Rest])        -> [{price, P / 10000.0}] ++ to_fix44_body_price(Rest);
 to_fix44_body_price([{avg,undefined} | Rest]) -> to_fix44_body_price(Rest);
-to_fix44_body_price([{avg,Qtd} | Rest])       -> [{avg_px, Qtd}] ++ to_fix44_body_price(Rest);
+to_fix44_body_price([{avg, P} | Rest])        -> [{avg_px, P / 10000.0}] ++ to_fix44_body_price(Rest);
 to_fix44_body_price([{last,undefined} | Rest])-> to_fix44_body_price(Rest);
-to_fix44_body_price([{last,Qtd} | Rest])      -> [{last_px, Qtd}] ++ to_fix44_body_price(Rest).
+to_fix44_body_price([{last, P} | Rest])       -> [{last_px, P / 10000.0}] ++ to_fix44_body_price(Rest).
 
 % -record(execparty,       {id, source, role}).
 to_fix44_body_party_item([]) -> [];
