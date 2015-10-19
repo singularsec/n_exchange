@@ -92,7 +92,7 @@ from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = O
 
   {Price,MatchingOrderId} = case Order#order.matches of
     [{P, _Qtd, Other}|_] ->
-         {#execreportprice{avg=0, last=P, price=Order#order.price}, Other};
+         {#execreportprice{avg=0, last=P, price=Order#order.price / 10000.0}, Other};
     _ -> {#execreportprice{avg=0}, undefined}
   end,
 
