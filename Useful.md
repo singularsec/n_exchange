@@ -53,6 +53,8 @@ nexchange_trading_book:send_new_order_single(Petro, #order{symbol="PETR4",cl_ord
 
 
 
+Bbdc = nexchange_bookregistry:get_book("BBDC4").
+nexchange_trading_book:dump_book(Bbdc).
 
 
 
