@@ -11,22 +11,25 @@
 
 
 record_to_proplist(#new_order_single{} = Rec) ->
-  lists:zip(record_info(fields, new_order_single), tl(tuple_to_list(Rec)));
+    lists:zip(record_info(fields, new_order_single), tl(tuple_to_list(Rec)));
 
 record_to_proplist(#logon{} = Rec) ->
-  lists:zip(record_info(fields, logon), tl(tuple_to_list(Rec))).
+    lists:zip(record_info(fields, logon), tl(tuple_to_list(Rec)));
+
+record_to_proplist(#order_cancel_request{} = Rec) ->
+    lists:zip(record_info(fields, order_cancel_request), tl(tuple_to_list(Rec))).
 
 crack(#new_order_single{} = NOS) ->
-  Prop = record_to_proplist(NOS),
-  ?DBG("new_order_single ~n ~p ~n", [Prop]);
+    Prop = record_to_proplist(NOS),
+    ?DBG("new_order_single ~n ~p ~n", [Prop]);
 
 crack(#order_cancel_request{} = NOS) ->
-  Prop = record_to_proplist(NOS),
-  ?DBG("order_cancel_request ~n ~p ~n", [Prop]);
+    Prop = record_to_proplist(NOS),
+    ?DBG("order_cancel_request ~n ~p ~n", [Prop]);
 
 crack(#logon{} = NOS) ->
-  Prop = record_to_proplist(NOS),
-  ?DBG("logon ~n ~p ~n", [Prop]).
+    Prop = record_to_proplist(NOS),
+    ?DBG("logon ~n ~p ~n", [Prop]).
 
 
 %% @doc packs fix message into binary
