@@ -32,6 +32,8 @@
 -record(execreportprice, {avg, last, price}).
 -record(execparty,       {id, source, role}).
 
+-record(quote_request_leg, {symbol, secex, qty, daytosettlement,fixedrate}).
+
 -record(execreport, {order_id,
                      secondary_order_id,
                      exec_id,

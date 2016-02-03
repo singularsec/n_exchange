@@ -16,6 +16,9 @@ record_to_proplist(#new_order_single{} = Rec) ->
 record_to_proplist(#logon{} = Rec) ->
     lists:zip(record_info(fields, logon), tl(tuple_to_list(Rec)));
 
+record_to_proplist(#quote_request{} = Rec) ->
+    lists:zip(record_info(fields, quote_request), tl(tuple_to_list(Rec)));
+
 record_to_proplist(#order_cancel_request{} = Rec) ->
     lists:zip(record_info(fields, order_cancel_request), tl(tuple_to_list(Rec))).
 
@@ -26,6 +29,10 @@ crack(#new_order_single{} = NOS) ->
 crack(#order_cancel_request{} = NOS) ->
     Prop = record_to_proplist(NOS),
     ?DBG("order_cancel_request ~n ~p ~n", [Prop]);
+
+crack(#quote_request{} = NOS) ->
+    Prop = record_to_proplist(NOS),
+    ?DBG("quote_request ~n ~p ~n", [Prop]);
 
 crack(#logon{} = NOS) ->
     Prop = record_to_proplist(NOS),

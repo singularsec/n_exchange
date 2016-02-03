@@ -51,3 +51,14 @@ logon_encoding_and_decoding_test() ->
     error_logger:info_msg("Encoded message is ~n ~p ~n ~p ~n", fix:dump(Bin)),
 
     ok.
+
+quote_request_test() ->
+  Bin = list_to_binary("8=FIX.4.49=29635=R34=71249=CLEAR52=20160115-20:17:10.62856=XPOMS131=31568_0146=255=PETR4T207=XBSP54=111=31569_038=10063=05497=205706=0.0121=400960=20160115-18:17:1044=16.19255=PETR4T207=XBSP54=211=31570_038=10063=05497=205706=0.0121=400860=20160115-18:17:1044=16.1921171=Y35004=010=046"),
+
+  {ok,QR,_Rest,_C} = fix:decode( Bin ),
+
+  % error_logger:info_msg("Encoded message is ~n ~p ~n ~p ~n", fix:dump(Bin)),
+  % error_logger:info_msg("Encoded message is ~n ~p ~n ~p ~n", fix:crack(QR)  ),
+  fix:crack(QR),
+
+  ok.

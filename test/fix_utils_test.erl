@@ -20,3 +20,29 @@ extract_parties_test() ->
   % error_logger:info_msg("R ~p ~n", [Parties])
 
   ?_assertEqual(Expected, Parties).
+
+extract_quote_request_legs_test() ->
+  L = [{msg_seq_num,712},
+       {sender_comp_id,<<"CLEAR">>},
+       {target_comp_id,<<"XPOMS">>},
+       {no_related_sym,2},
+       {symbol,<<"PETR4T">>},
+       {security_exchange,<<"XBSP">>},
+       {order_qty,100},
+       {5497,<<"20">>},
+       {5706,<<"0.012">>},
+       {symbol,<<"PETR4T1">>},
+       {security_exchange,<<"XBSP">>},
+       {order_qty,100},
+       {5497,<<"20">>},
+       {5706,<<"0.012">>},
+       {1171,<<"Y">>},
+       {35004,<<"0">>}],
+  % -record(quote_request_leg, {symbol, secex, qty, daytosettlement,fixedrate}).
+  Legs = fix_utils:extract_quote_request_legs(L),
+  Expected = [{quote_request_leg,<<"PETR4T">>,1,36},
+              {quote_request_leg,<<"PETR4T1">>,2,7}],
+
+  error_logger:info_msg("R ~p ~n", [Legs]),
+
+  ?_assertEqual(Expected, Legs).
