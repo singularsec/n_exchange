@@ -18,6 +18,10 @@ handle_messages([{#order_cancel_request{} = CR,_}|Messages], Rest, #state{} = St
   ?DBG("order_cancel_request ~n ~p", fix:crack(CR)),
   fix_order_message_handler:handle_order_cancel_request(CR, Messages, Rest, State);
 
+handle_messages([{#quote_request{} = CR,_}|Messages], Rest, #state{} = State) ->
+  ?DBG("quote_request ~n ~p", fix:crack(CR)),
+  fix_forward_message_handler:handle_quote_request(CR, Messages, Rest, State);
+
 handle_messages([{#heartbeat{} = _Hb,_}|Messages], Rest, #state{} = State) ->
   % ?DBG("heartbeat ~p", _Hb#heartbeat.fields),
   Ts = erlang:timestamp(),
