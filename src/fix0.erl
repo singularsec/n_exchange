@@ -47,7 +47,7 @@ pack(MessageType, Body, SeqNum, Sender, Target)
   Header2 = [{msg_type, MessageType},{sender_comp_id, Sender}, {target_comp_id, Target}, {msg_seq_num, SeqNum}
   % ,{poss_dup_flag, "N"}
   ] ++ case proplists:get_value(sending_time, Body) of
-    undefined -> [{sending_time, fix:now()}];
+    undefined -> [{sending_time, fix0:now()}];
     _ -> []
   end,
   Body1 = encode(Header2 ++ Body),

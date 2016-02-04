@@ -13,7 +13,7 @@ decode_messages(Bin) ->
   decode_messages(Bin, []).
 
 decode_messages(Bin, Acc) ->
-  case fix:decode(Bin) of
+  case fix0:decode(Bin) of
     {ok, Message, MessageBin, Rest} ->
       % Continue decoding
       decode_messages(Rest, [{Message,MessageBin}|Acc]);

@@ -4,8 +4,8 @@
 
 -include("log.hrl").
 -include("../include/fix_session.hrl").
--include("../include/admin44.hrl").
--include("../include/business44.hrl").
+-include("../include/admin44_xp.hrl").
+-include("../include/business44_xp.hrl").
 -include("../include/secexchange.hrl").
 
 
@@ -63,6 +63,9 @@ handle_quote_request(#quote_request{} = QR, Messages, Rest, #state{} = State) ->
     % send a quote_status_report for each leg and a exec report for each leg
 
     Fields = QR#quote_request.fields,
+    Legs = fix_utils:extract_quote_request_legs(Fields),
+
+
 
 
 
