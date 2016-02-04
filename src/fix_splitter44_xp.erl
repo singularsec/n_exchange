@@ -6,7 +6,9 @@
 -export([split/1, field_by_number/1, parse_date/1]).
 
 init_nif() ->
-  Path = filename:dirname(code:which(?MODULE)) ++ "../priv",
+  % Path = filename:dirname(code:which(?MODULE)) ++ "../priv",
+  % Load = erlang:load_nif(Path ++ "/fix_splitter44_xp", 0),
+  Path = filename:dirname(code:which(?MODULE)) ++ "/../priv",
   Load = erlang:load_nif(Path ++ "/fix_splitter44_xp", 0),
   case Load of
     ok -> ok;
