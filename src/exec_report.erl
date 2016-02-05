@@ -26,6 +26,10 @@ build_cancel(#order_cancel_request{} = Order, Reason) ->
 build_rejection(#order{} = Order, Reason) ->
   from_order(Order, rejected, Reason).
 
+build_for_quote_request_leg(#quote_request_leg{} = Leg) ->
+
+
+  ok.
 
 report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report,
                   Seq) ->

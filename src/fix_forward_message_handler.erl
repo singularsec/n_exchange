@@ -8,56 +8,51 @@
 -include("../include/business44_xp.hrl").
 -include("../include/secexchange.hrl").
 
+ % [{sending_time,<<"20160115-20:17:10.628">>},
+ %  {quote_req_id,<<"31568_0">>},
+ %  {private_quote,<<"Y">>},
+ %  {unique_trade_id,undefined},
+ %  {execute_underlying_trade,<<"0">>},
+ %  {related_sym,[]},
+ %  {fields,[{msg_seq_num,712},
+ %           {sender_comp_id,<<"CLEAR">>},
+ %           {target_comp_id,<<"XPOMS">>},
+confirm_and_execute(QR, [#quote_request_leg{} = Leg | Rest], #state{} = State) ->
+  PrimaryFields = [
+    {account, Leg#quote_request_leg.account },
+    {order_qty, Leg#quote_request_leg.order_qty },
+    {price, Leg#quote_request_leg.price },
+    {side, Leg#quote_request_leg.side },
+    {symbol, Leg#quote_request_leg.symbol },
+    {transact_time, Leg#quote_request_leg.transact_time },
+    {settl_type, Leg#quote_request_leg.transact_time },
+    {quote_id, State#state.our_seq }, % unique
+    {quote_req_id, Leg#quote_request_leg.quote_req_id },
+    {quote_status, 0 },
+    {private_quote, Leg#quote_request_leg.private_quote },
+    {days_to_settlement, Leg#quote_request_leg.days_to_settlement },
+    {fixed_rate, Leg#quote_request_leg.fixed_rate },
+    {execute_underlying_trade, Leg#quote_request_leg.execute_underlying_trade },
+    {quote_status_report_type, Leg#quote_request_leg.quote_status_report_type },
+    {quote_status_response_to, Leg#quote_request_leg.quote_status_response_to }
+  ],
+  FromSessId = proplists:get_value(target_comp_id, QR#quote_request.fields),
+  DestSessId = proplists:get_value(sender_comp_id, QR#quote_request.fields),
+  Fields = [{cl_ord_id, Leg#quote_request_leg.cl_ord_id},
+            {target_comp_id, DestSessId},
+            {sender_comp_id, FromSessId}],
+  NewState = send(quote_status_report, PrimaryFields, Fields, State),
+
+  Report = exec_report:build_for_quote_request_leg(Leg),
+  exec_report_dispatcher:dispatch(Report),
+
+  confirm_and_execute(QR, Rest, NewState);
 
 
-% [{sending_time,<<"20160115-20:17:10.628">>},
-%  {quote_req_id,<<"31568_0">>},
-%  {rfq_req_id,undefined},
-%  {cl_ord_id,<<"31570_0">>},
-%  {order_capacity,undefined},
-%  {prev_close_px,undefined},
-%  {quote_request_type,undefined},
-%  {quote_type,undefined},             {trading_session_id,undefined},
-%  {trading_session_sub_id,undefined}, {trade_origination_date,undefined},
-%  {side,sell},
-%  {qty_type,undefined},
-%  {settl_type,regular},
-%  {settl_date,undefined},
-%  {settl_date2,undefined},
-%  {order_qty2,undefined},
-%  {currency,undefined},
-%  {account,<<"4008">>},
-%  {acct_id_source,undefined},
-%  {account_type,undefined},
-%  {quote_price_type,undefined},
-%  {ord_type,undefined},
-%  {valid_until_time,undefined},
-%  {expire_time,undefined},
-%  {transact_time,<<"20160115-18:17:10">>},
-%  {price_type,undefined},
-%  {price,16.192},
-%  {price2,undefined},
-%  {text,undefined},
-%  {encoded_text,undefined},
-%  {related_sym,[]},
-%  {legs,[]},
-%  {quote_qualifiers,[]},
-%  {fields,[{msg_seq_num,712},
-%           {sender_comp_id,<<"CLEAR">>},
-%           {target_comp_id,<<"XPOMS">>},
-%           {no_related_sym,2},
-%           {symbol,<<"PETR4T">>},
-%           {security_exchange,<<"XBSP">>},
-%           {order_qty,100},
-%           {5497,<<"20">>},
-%           {5706,<<"0.012">>},
-%           {symbol,<<"PETR4T">>},
-%           {security_exchange,<<"XBSP">>},
-%           {order_qty,100},
-%           {5497,<<"20">>},
-%           {5706,<<"0.012">>},
-%           {1171,<<"Y">>},
-%           {35004,<<"0">>}]}]
+
+confirm_and_execute(_, [], State) -> State.
+
+
 handle_quote_request(#quote_request{} = QR, Messages, Rest, #state{} = State) ->
 
     % send a quote_status_report for each leg and a exec report for each leg
@@ -65,8 +60,6 @@ handle_quote_request(#quote_request{} = QR, Messages, Rest, #state{} = State) ->
     Fields = QR#quote_request.fields,
     Legs = fix_utils:extract_quote_request_legs(Fields),
 
+    NewState = confirm_and_execute(QR, Legs, State),
 
-
-
-
-    ok.
+    fix_message_handler:handle_messages(Messages, Rest, NewState).
