@@ -26,10 +26,63 @@ build_cancel(#order_cancel_request{} = Order, Reason) ->
 build_rejection(#order{} = Order, Reason) ->
   from_order(Order, rejected, Reason).
 
-build_for_quote_request_leg(#quote_request_leg{} = Leg) ->
+build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} = Leg, QuoteId) ->
+  NewId = erlang:unique_integer([positive]),
+  Qtd = #execreportqtd{order_qtd= Leg#quote_request_leg.order_qty,
+                       last= 0,
+                       leaves= Leg#quote_request_leg.order_qty,
+                       cum= 0},
+  Price = #execreportprice{avg=0, last=0, price=Leg#quote_request_leg.price},
+  Fields     = QR#quote_request.fields,
+  FromSessId = proplists:get_value(target_comp_id, Fields),
+  DestSessId = proplists:get_value(sender_comp_id, Fields),
+  Id = "000000" ++ QuoteId,
+  #execreport{order_id = Id,
+              secondary_order_id = "800_" ++ Id,
+              exec_id = NewId,
+              exec_type = new,
+              order_status = new,
+              order_type = limit,
+              cl_ord_id = Leg#quote_request_leg.cl_ord_id,
+              account = Leg#quote_request_leg.account,
+              symbol = Leg#quote_request_leg.symbol,
+              side = Leg#quote_request_leg.side,
+              time_in_force = fill_or_kill,
+              qtd = Qtd,
+              price = Price,
+              ord_rej_reason = 99, % needs constant?
+              security_exchange = <<"XBSP">>,
+              from_sessionid = FromSessId,
+              to_sessionid = DestSessId}.
 
+build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} = Leg, QuoteId) ->
 
-  ok.
+  NewId = erlang:unique_integer([positive]),
+  Qtd = #execreportqtd{order_qtd= Leg#quote_request_leg.order_qty,
+                       last= 0,
+                       leaves= 0,
+                       cum= Leg#quote_request_leg.order_qty},
+  Price = #execreportprice{avg=0, last=0, price=Leg#quote_request_leg.price},
+  Fields     = QR#quote_request.fields,
+  FromSessId = proplists:get_value(target_comp_id, Fields),
+  DestSessId = proplists:get_value(sender_comp_id, Fields),
+  Id = "000000" ++ QuoteId,
+  #execreport{order_id = Id,
+              secondary_order_id = "800_" ++ Id,
+              exec_id = NewId,
+              exec_type = trade,
+              order_status = filled,
+              order_type = limit,
+              cl_ord_id = Leg#quote_request_leg.cl_ord_id,
+              account = Leg#quote_request_leg.account,
+              symbol = Leg#quote_request_leg.symbol,
+              side = Leg#quote_request_leg.side,
+              time_in_force = fill_or_kill,
+              qtd = Qtd,
+              price = Price,
+              unique_trade_id = NewId,
+              from_sessionid = FromSessId,
+              to_sessionid = DestSessId}.
 
 report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report,
                   Seq) ->
@@ -43,20 +96,6 @@ from_order(#order_cancel_request{} = Order,
            ExecType, _Reason) ->
 
   NewId = erlang:unique_integer([positive]),
-
-  % 35=F | 34=2094 | 1=307011 | 11=32543_1 | 38=100 | 41=32543_0 | 54=1 | 55=PETR4 | 60=20150716-14:51:14
-  %  | 453=3 | 448=98 | 447=D | 452=36
-  %          | 448=308 | 447=D | 452=7
-  %          | 448=BVMF | 447=D | 452=54
-
-  % 35=8 | 34=1332 | 1=307011 | 6=0 | 11=32543_1 | 14=0 | 17=82249:74557 | 37=8244561958
-  %      | 38=100 | 39=4 | 40=2 | 41=32543_0 | 44=11 | 54=1 | 55=PETR4
-  %      | 59=0 | 60=20150716-14:51:14.429 | 75=20150716 | 150=4 | 151=0
-  %      | 198=8254423000
-  %      | 453=3
-  %       | 448=98 | 447=D | 452=36
-  %       | 448=308 | 447=D | 452=7
-  %       | 448=BVMF | 447=D | 452=54
 
   Fields     = Order#order_cancel_request.fields,
   FromSessId = proplists:get_value(target_comp_id, Fields),

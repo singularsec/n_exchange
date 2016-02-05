@@ -11,7 +11,7 @@
 dispatch(Report = #execreport{to_sessionid=SessionId}) ->
   dispatch(Report, SessionId).
 
-dispatch(Report, Order=#order{from_sessionid=SessionId}) ->
+dispatch(Report, #order{from_sessionid=SessionId}) ->
   dispatch(Report, SessionId);
 
 dispatch(Report, SessionId) when is_binary(SessionId) ->
@@ -27,5 +27,5 @@ dispatch(Report, SessionId) when is_list(SessionId) ->
 
 multi_cast([], _Request) -> ok;
 
-multi_cast([Pid|Rest], Request) ->
+multi_cast([Pid|_], Request) ->
   gen_server:cast(Pid, Request).

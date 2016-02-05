@@ -18,6 +18,7 @@
  %           {sender_comp_id,<<"CLEAR">>},
  %           {target_comp_id,<<"XPOMS">>},
 confirm_and_execute(QR, [#quote_request_leg{} = Leg | Rest], #state{} = State) ->
+  QuoteId = State#state.our_seq,
   PrimaryFields = [
     {account, Leg#quote_request_leg.account },
     {order_qty, Leg#quote_request_leg.order_qty },
@@ -26,25 +27,29 @@ confirm_and_execute(QR, [#quote_request_leg{} = Leg | Rest], #state{} = State) -
     {symbol, Leg#quote_request_leg.symbol },
     {transact_time, Leg#quote_request_leg.transact_time },
     {settl_type, Leg#quote_request_leg.transact_time },
-    {quote_id, State#state.our_seq }, % unique
-    {quote_req_id, Leg#quote_request_leg.quote_req_id },
+    {quote_id, QuoteId }, % unique
+    {quote_req_id, QR#quote_request.quote_req_id },
     {quote_status, 0 },
-    {private_quote, Leg#quote_request_leg.private_quote },
+    {private_quote, QR#quote_request.private_quote },
     {days_to_settlement, Leg#quote_request_leg.days_to_settlement },
     {fixed_rate, Leg#quote_request_leg.fixed_rate },
-    {execute_underlying_trade, Leg#quote_request_leg.execute_underlying_trade },
-    {quote_status_report_type, Leg#quote_request_leg.quote_status_report_type },
-    {quote_status_response_to, Leg#quote_request_leg.quote_status_response_to }
+    {execute_underlying_trade, QR#quote_request.execute_underlying_trade },
+    {quote_status_report_type, 1 },
+    {quote_status_response_to, 1 }
   ],
   FromSessId = proplists:get_value(target_comp_id, QR#quote_request.fields),
   DestSessId = proplists:get_value(sender_comp_id, QR#quote_request.fields),
   Fields = [{cl_ord_id, Leg#quote_request_leg.cl_ord_id},
             {target_comp_id, DestSessId},
             {sender_comp_id, FromSessId}],
-  NewState = send(quote_status_report, PrimaryFields, Fields, State),
 
-  Report = exec_report:build_for_quote_request_leg(Leg),
-  exec_report_dispatcher:dispatch(Report),
+  NewState = fix_message_handler:send(quote_status_report, PrimaryFields, Fields, State),
+
+  ReportNew = exec_report:build_accept_for_quote_request_leg(QR, Leg, QuoteId),
+  exec_report_dispatcher:dispatch(ReportNew),
+
+  ReportFilled = exec_report:build_filled_for_quote_request_leg(QR, Leg, QuoteId),
+  exec_report_dispatcher:dispatch(ReportFilled),
 
   confirm_and_execute(QR, Rest, NewState);
 
