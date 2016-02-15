@@ -26,7 +26,7 @@ confirm_and_execute(QR, [#quote_request_leg{} = Leg | Rest], #state{} = State) -
     {side, Leg#quote_request_leg.side },
     {symbol, Leg#quote_request_leg.symbol },
     {transact_time, Leg#quote_request_leg.transact_time },
-    {settl_type, Leg#quote_request_leg.transact_time },
+    {settl_type, Leg#quote_request_leg.settl_type },
     {quote_id, QuoteId }, % unique
     {quote_req_id, QR#quote_request.quote_req_id },
     {quote_status, 0 },
