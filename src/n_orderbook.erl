@@ -3,7 +3,7 @@
 -ifdef(EUNIT).
 -compile(export_all).
 -else.
--export([create/1, add_new_order_single/2, dump/1]).
+-export([create/1, add_new_order_single/2, dump/1, qa_fillbook/1]).
 -endif.
 
 -include("../include/secexchange.hrl").
@@ -30,6 +30,34 @@ dump(#orderbook{buys=BuysT, sells=SellsT}) ->
   Buys  = traverse_ets_table(BuysT,  nil, Collector, []),
   Sells = traverse_ets_table(SellsT, nil, Collector, []),
   {Buys, Sells}.
+
+qa_fill_item([#order{} = Order| Rest], Book) ->
+  NewMatchingOrder = #order{
+        symbol     = Order#order.symbol,
+        cl_ord_id  = "cl1",
+        qtd        = Order#order.qtd_left,
+        qtd_left   = Order#order.qtd_left,
+        price      = Order#order.price / 10000,
+        price_type = Order#order.price_type,
+        order_status = new,
+        order_type = limit,
+        side       = opposite_side(Order#order.side),
+        account    = "acc1",
+        from_sessionid = "CCLR", to_sessionid="SOME"
+  },
+  add_new_order_single(NewMatchingOrder, Book),
+  qa_fill_item(Rest, Book);
+
+qa_fill_item([], Book) ->  ok.
+
+% matches all open orders with a counterpart
+qa_fillbook(#orderbook{buys=BuysT, sells=SellsT} = Book) ->
+  Collect = fun (Item, Acc) -> [Item] ++ Acc end,
+  Buys  = traverse_ets_table(BuysT,  nil, Collect, []),
+  Sells = traverse_ets_table(SellsT, nil, Collect, []),
+  ok = qa_fill_item(Buys, Book),
+  ok = qa_fill_item(Sells, Book),
+  dump(Book).
 
 add_new_order_single(#order{} = Order, Book) ->
   SupportedOrderTypes = [ limit, market, stop, stoplimit, marketwithleftoverlimit ],
@@ -295,6 +323,9 @@ get_table(sell, #orderbook{sells=SellsT}) -> SellsT.
 
 other_side(buy, #orderbook{sells=SellsT}) -> SellsT;
 other_side(sell, #orderbook{buys=BuysT}) -> BuysT.
+
+opposite_side(buy) -> sell;
+opposite_side(sell) -> buy.
 
 get_now() -> erlang:system_time(micro_seconds). % - 1441736774862944.
 
