@@ -217,7 +217,7 @@ decrement_qtd_and_record(ByHowMany,
   NewStatus =
     case Filled + ByHowMany of
       Original -> filled;
-      _ -> partial
+      _ -> partially_filled % fix 44: partial
     end,
   NewList = [{Price,ByHowMany,OtherId}] ++ MList,
   Order#order{order_status=NewStatus,
