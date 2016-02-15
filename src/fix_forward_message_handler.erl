@@ -18,7 +18,7 @@
  %           {sender_comp_id,<<"CLEAR">>},
  %           {target_comp_id,<<"XPOMS">>},
 confirm_and_execute(QR, [#quote_request_leg{} = Leg | Rest], #state{} = State) ->
-  QuoteId = State#state.our_seq,
+  QuoteId = list_to_binary ( integer_to_list( State#state.our_seq ) ),
   PrimaryFields = [
     {account, Leg#quote_request_leg.account },
     {order_qty, Leg#quote_request_leg.order_qty },
