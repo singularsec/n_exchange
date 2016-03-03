@@ -8,13 +8,23 @@ rr(nexchange_trading_book).
 
 -- creates or access an book:
 
-Petro = nexchange_bookregistry:get_book("PETR4").
+Petro = nexchange_bookregistry:get_book("PETR4"). 
+Vale = nexchange_bookregistry:get_book("VALE5"). 
+Bvmf = nexchange_bookregistry:get_book("BVMF3"). 
 
 
 
 -- Dumps buys/sells open entries in the book (not a filled book)
 
 nexchange_trading_book:dump_book(Petro).
+
+nexchange_trading_book:qa_fillbook(Petro). 
+
+nexchange_trading_book:qa_fillbook(Vale). 
+
+nexchange_trading_book:qa_fillbook(Bvmf). 
+
+
 
 
 -- Adds a sell Order
