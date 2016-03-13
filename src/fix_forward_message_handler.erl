@@ -40,8 +40,8 @@ confirm_and_execute(QR, [#quote_request_leg{} = Leg | Rest], #state{} = State) -
   FromSessId = proplists:get_value(target_comp_id, QR#quote_request.fields),
   DestSessId = proplists:get_value(sender_comp_id, QR#quote_request.fields),
   Fields = [{cl_ord_id, Leg#quote_request_leg.cl_ord_id},
-            {target_comp_id, DestSessId},
-            {sender_comp_id, FromSessId}],
+            {target_comp_id, FromSessId},
+            {sender_comp_id, DestSessId}],
 
   NewState = fix_message_handler:send(quote_status_report, PrimaryFields, Fields, State),
 
