@@ -104,6 +104,8 @@ from_order(#order_cancel_request{} = Order,
 
   Parties = fix_utils:extract_parties(Fields),
 
+  error_logger:info_msg("exec report ~p ~n", [ExecType, Order#order_cancel_request.order_id]),
+
   #execreport{order_id = Order#order_cancel_request.order_id,
              exec_id = NewId,
              exec_type = ExecType,
