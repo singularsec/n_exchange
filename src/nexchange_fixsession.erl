@@ -73,7 +73,7 @@ handle_info({tcp, _Socket, Data}, #state{authenticated=false,prevbuffer=PrevBuf}
 
 handle_info({tcp, _Socket, Data}, #state{authenticated=true,prevbuffer=PrevBuf} = State) ->
   Buffer = <<PrevBuf/binary, Data/binary>>,
-  error_logger:info_msg("received something from socket ~p ~n", [Data]),
+  # error_logger:info_msg("received something from socket ~p ~n", [Data]),
 
   {Messages, Rest} = fix_connection:decode_messages(Buffer),
 
