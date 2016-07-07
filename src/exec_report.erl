@@ -88,7 +88,7 @@ report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId}
                   Seq) ->
   ReportPropList = record_to_proplist(Report),
   Body = to_fix44_body(ReportPropList),
-  error_logger:info_msg("Body ~p ~n", [Body]),
+  % error_logger:info_msg("Body ~p ~n", [Body]),
   fix0:pack(execution_report, Body, Seq, DestSessId, FromSessId).
 
 
