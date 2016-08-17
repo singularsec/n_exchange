@@ -8,36 +8,23 @@
 -include("../include/business44_xp.hrl").
 -include("../include/secexchange.hrl").
 
-handle_order_cancel_request(#order_cancel_request{} = Order, Messages, Rest, #state{} = State) ->
-  % 35=F | 34=2 | 49=CCLRA301 | 52=20150923-02:02:02.571 | 56=OE101 | 1=2610 |
-  % 11=4089_0 | 38=100 | 41=4089 | 54=1 | 55=PETR4 | 60=20150923-02:01:52 |
-  % 453=3 | 448=CCLRA301 | 447=D | 452=36 | 448=308 | 447=D | 452=7 | 448=DMA1 | 447=D | 452=54
+handle_order_cancel_request(#order_cancel_request{} = Req, Messages, Rest, #state{} = State) ->
+  
+  CancelOrder = order_cancel_from_cancel_order_request(Req),
 
- %  {order_cancel_request,
- % <<"20150923-02:02:02.571">>, <<"4089">>,
- % undefined, <<"4089_0">>, undefined,  undefined,
- % undefined,  undefined,
- % <<"2610">>, undefined, undefined,
- % buy, <<"20150923-02:01:52">>, undefined, undefined, undefined,[],
- % [{msg_seq_num,2},
- %  {sender_comp_id, <<"CCLRA301">>},
- %  {target_comp_id, <<"OE101">>},
- %  {order_qty,100},
- %  {symbol, <<"PETR4">>},
- %  {no_party_ids,3},
- %  {party_id,    <<"CCLRA301">>},
- %  {party_id_source, propcode},
- %  {party_role,36},
- %  {party_id, <<"308">>},
- %  {party_id_source, propcode},
- %  {party_role,7},
- %  {party_id, <<"DMA1">>},
- %  {party_id_source,propcode},
- %  {party_role,54}]}]
+  BookPid = nexchange_bookregistry:get_book(CancelOrder#order_cancel.symbol),
+  
+  Succeeded = nexchange_trading_book:try_cancel(BookPid, CancelOrder) == done,
 
-  Report = exec_report:build_cancel(Order, ""),
-
-  exec_report_dispatcher:dispatch(Report),
+  if 
+    Succeeded == false -> 
+      % means no book cancelled the order
+      Report = exec_report:build_cancel_reject(CancelOrder, "order not found"),
+      exec_report_dispatcher:dispatch(Report);
+    true -> 
+       ok
+      % exec report sent by the book (indirectly)
+  end,
 
   fix_message_handler:handle_messages(Messages, Rest, State).
 
@@ -46,7 +33,9 @@ handle_new_order_single(#new_order_single{} = Order, Messages, Rest, #state{} = 
   % [ {msg_seq_num,9}, {sender_comp_id, <<"INIT">>},
   % {target_comp_id, <<"ACCEPT">>}, {order_qty,10}, {symbol,<<"PETR4">>}]
   NewOrder = order_from_new_order_single(Order),
-  % potential bottleneck here as it's a sync call
+
+  % TODO: magic price should cause a reject
+
   BookPid = nexchange_bookregistry:get_book(NewOrder#order.symbol),
 
   nexchange_trading_book:send_new_order_single(BookPid, NewOrder),
@@ -77,4 +66,19 @@ order_from_new_order_single(#new_order_single{} = Order) ->
     account     = Order#new_order_single.account,
     cl_ord_id   = Order#new_order_single.cl_ord_id,
     parties     = Parties
+  }.
+
+order_cancel_from_cancel_order_request(#order_cancel_request{} = Req) -> 
+  
+  Fields = Req#order_cancel_request.fields,
+  Parties = fix_utils:extract_parties(Fields),
+
+  #order_cancel{
+    to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+    from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
+    symbol         = binary_to_list( proplists:get_value(symbol, Fields) ),
+    cl_ord_id      = Req#order_cancel_request.cl_ord_id,
+    side           = Req#order_cancel_request.side, 
+    account        = Req#order_cancel_request.account,
+    parties        = Parties
   }.

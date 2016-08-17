@@ -3,7 +3,7 @@
 -ifdef(EUNIT).
 -compile(export_all).
 -else.
--export([create/1, add_new_order_single/2, dump/1, qa_fillbook/1]).
+-export([create/1, add_new_order_single/2, dump/1, qa_fillbook/1, try_cancel_order/2]).
 -endif.
 
 -include("../include/secexchange.hrl").
@@ -22,8 +22,27 @@ create(Symbol) ->
 change_order(#order{} = Order, Book) ->
   ok.
 
-cancel_order(#order{} = Order, Book) ->
-  ok.
+try_cancel_order(#order_cancel{side=buy} = CancelOrder, #orderbook{buys=BuysT} = Book) ->
+  ClOrderId = CancelOrder#order_cancel.cl_ord_id,
+  MatcherByClOrdId = fun (Item) -> if Item#order.cl_ord_id =:= ClOrderId -> Item; true -> nil end end,
+  MatchedBuy = find_in_ets_table(BuysT, nil, MatcherByClOrdId),
+  if 
+    MatchedBuy =:= nil -> not_found;
+    true -> 
+      cancel_order(MatchedBuy, "", Book), 
+      done
+  end;
+
+try_cancel_order(#order_cancel{side=sell} = CancelOrder, #orderbook{sells=SellsT} = Book) ->
+  ClOrderId = CancelOrder#order_cancel.cl_ord_id,
+  MatcherByClOrdId = fun (Item) -> if Item#order.cl_ord_id =:= ClOrderId -> Item; true -> nil end end,
+  MatchedSell = find_in_ets_table(SellsT, nil, MatcherByClOrdId),
+  if 
+    MatchedSell =:= nil -> not_found;
+    true -> 
+      cancel_order(MatchedSell, "", Book),
+      done
+  end.
 
 dump(#orderbook{buys=BuysT, sells=SellsT}) ->
   Collector = fun (Item, Acc) -> [pretty_print_order(Item)] ++ Acc end,
@@ -315,6 +334,24 @@ traverse_ets_table(Table, Key, Collector, State) ->
         % if Collector returns 'done' we stop traversing and return previous state
         NewState =:= done -> State;
         true -> traverse_ets_table(Table, KeyToUse, Collector, NewState)
+      end
+  end.
+
+% If predicate returns something other than the LINE we keep moving, otherwise returns Line (Row)
+find_in_ets_table(Table, Key, Predicate) ->
+  KeyToUse = case Key of
+    nil ->  ets:first(Table);
+    _ ->    ets:next(Table, Key)
+  end,
+  case KeyToUse of
+    '$end_of_table' -> nil; % end of table, return state
+    _ ->                      % evaluate next line
+      [Line|_] = ets:lookup(Table, KeyToUse), % this always returns a list
+      NewState = Predicate(Line),
+      if
+        % if Predicate returns the Line we stop traversing and return Line
+        NewState =:= Line -> Line;
+        true -> find_in_ets_table(Table, KeyToUse, Predicate)
       end
   end.
 

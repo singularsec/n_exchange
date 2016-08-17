@@ -65,9 +65,43 @@
                      to_sessionid
                     }).
 
+-record(cancelreject, {order_id,
+                     secondary_order_id,
+                     exec_id,
+                     exec_type,
+                     order_status,
+                     order_type,
+                     cl_ord_id,
+                     orig_cl_ord_id,
+                     account,
+                     symbol,
+                     side,
+                     time_in_force,
+                     transact_time, trade_date,
+                     qtd,    % execreportqtd#
+                     price,  % execreportprice#
+                     contrabrokers=[],
+                     parties=[],
+                     text,   % for error messages
+                     sess_id=1,
+                     sess_sub_id=17,
+                     ord_rej_reason, security_exchange, unique_trade_id,
+                     from_sessionid,
+                     to_sessionid
+                    }).
+
 -record(tradeinfo, {symbol,
                     refid,
                     price,
                     qtd,
                     buyer, seller
+                    }).
+
+-record(order_cancel, {cl_ord_id, 
+                    account,
+                    from_sessionid,
+                    to_sessionid,
+                    side,
+                    symbol,
+                    parties=[]
                     }).

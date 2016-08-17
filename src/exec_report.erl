@@ -26,6 +26,10 @@ build_cancel(#order_cancel_request{} = Order, Reason) ->
 build_rejection(#order{} = Order, Reason) ->
   from_order(Order, rejected, Reason).
 
+% this is not exactly an execution report
+build_cancel_reject(#order_cancel_request{} = Order, Reason) ->
+  cancel_reject_from_order(Order, Reason).
+
 build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} = Leg, QuoteId) ->
   NewId = erlang:unique_integer([positive]),
   Qtd = #execreportqtd{order_qtd= Leg#quote_request_leg.order_qty,
@@ -89,9 +93,48 @@ report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId}
   ReportPropList = record_to_proplist(Report),
   Body = to_fix44_body(ReportPropList),
   % error_logger:info_msg("Body ~p ~n", [Body]),
-  fix0:pack(execution_report, Body, Seq, DestSessId, FromSessId).
+  fix0:pack(execution_report, Body, Seq, DestSessId, FromSessId);
 
 
+report_to_fix_bin(#cancelreject{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report,
+                  Seq) ->
+  ReportPropList = record_to_proplist(Report),
+  Body = to_fix44_body(ReportPropList),
+  % error_logger:info_msg("Body ~p ~n", [Body]),
+  fix0:pack(order_cancel_reject, Body, Seq, DestSessId, FromSessId).
+
+
+cancel_reject_from_order(#order_cancel_request{} = Order, Reason) ->
+
+  NewId = erlang:unique_integer([positive]),
+
+  Fields     = Order#order_cancel_request.fields,
+  FromSessId = proplists:get_value(target_comp_id, Fields),
+  DestSessId = proplists:get_value(sender_comp_id, Fields),
+  Symbol     = proplists:get_value(symbol, Fields),
+
+  Parties = fix_utils:extract_parties(Fields),
+
+  error_logger:info_msg("exec report rejected cancel ~p ~n", [Order#order_cancel_request.order_id]),
+
+  #cancelreject{order_id = Order#order_cancel_request.order_id,
+               account = Order#order_cancel_request.account,
+               order_status = rejected,
+               order_type = limit,
+               time_in_force = day,
+               cl_ord_id = Order#order_cancel_request.cl_ord_id,
+               orig_cl_ord_id= Order#order_cancel_request.orig_cl_ord_id,
+               symbol = Symbol,
+               side = Order#order_cancel_request.side,
+               % transact_time= % 60=20150716-14:51:11.152 |  TransactTime
+               % trade_date= ,% 75=20150716 |    <--- TradeDate
+               contrabrokers = [735],
+               parties = Parties,
+               text = Reason,
+               from_sessionid = FromSessId,
+               to_sessionid = DestSessId
+               }.
+ 
 from_order(#order_cancel_request{} = Order,
            ExecType, _Reason) ->
 
@@ -104,7 +147,7 @@ from_order(#order_cancel_request{} = Order,
 
   Parties = fix_utils:extract_parties(Fields),
 
-  error_logger:info_msg("exec report ~p ~n", [ExecType, Order#order_cancel_request.order_id]),
+  error_logger:info_msg("exec report rejected cancel ~p ~n", [ExecType, Order#order_cancel_request.order_id]),
 
   #execreport{order_id = Order#order_cancel_request.order_id,
              exec_id = NewId,
@@ -184,6 +227,9 @@ record_to_proplist(undefined) -> [];
 
 record_to_proplist(#execreport{} = Rec) ->
   lists:zip(record_info(fields, execreport), tl(tuple_to_list(Rec)));
+
+record_to_proplist(#cancelreject{} = Rec) ->
+  lists:zip(record_info(fields, cancelreject), tl(tuple_to_list(Rec)));
 
 record_to_proplist(#execreportqtd{} = Rec) ->
   lists:zip(record_info(fields, execreportqtd), tl(tuple_to_list(Rec)));

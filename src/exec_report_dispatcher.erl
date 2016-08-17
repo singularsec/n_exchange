@@ -8,6 +8,9 @@
 -include("../include/business44_xp.hrl").
 -include("../include/secexchange.hrl").
 
+dispatch(Report = #cancelreject{to_sessionid=SessionId}) ->
+  dispatch(Report, SessionId);
+
 dispatch(Report = #execreport{to_sessionid=SessionId}) ->
   dispatch(Report, SessionId).
 
@@ -20,7 +23,6 @@ dispatch(Report, SessionId) when is_binary(SessionId) ->
 dispatch(Report, SessionId) when is_list(SessionId) ->
   Pids = nexchange_sessionregistry:get_fixsessions(SessionId),
   multi_cast(Pids, {send, Report}).
-
 
 
 
