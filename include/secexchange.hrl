@@ -97,11 +97,25 @@
                     buyer, seller
                     }).
 
--record(order_cancel, {cl_ord_id, orig_cl_ord_id,
-                    account,
-                    from_sessionid,
-                    to_sessionid,
-                    side,
-                    symbol,
-                    parties=[]
-                    }).
+-record(order_cancel, {order_id, 
+                       cl_ord_id, orig_cl_ord_id,
+                       account,
+                       from_sessionid,
+                       to_sessionid,
+                       side,
+                       symbol,
+                       parties=[]
+                      }).
+
+-record(order_modify, {order_id, 
+                       cl_ord_id, orig_cl_ord_id,
+                       order_qty,    
+                       price,
+                       price_type,
+                       account,
+                       from_sessionid,
+                       to_sessionid,
+                       side,
+                       symbol,
+                       parties=[]
+                      }).

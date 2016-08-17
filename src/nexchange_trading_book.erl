@@ -7,7 +7,7 @@
 % API
 
 -export([start_link/1]).
--export([ping/1, send_new_order_single/2, modify_order/2, try_cancel/2, cancel_order/2, dump_book/1, qa_fillbook/1]).
+-export([ping/1, send_new_order_single/2, try_modify_order/2, try_cancel/2, cancel_order/2, dump_book/1, qa_fillbook/1]).
 
 % Callback
 
@@ -24,8 +24,8 @@ ping(BookPid) when is_pid(BookPid) ->
 send_new_order_single(BookPid, #order{} = Order) when is_pid(BookPid) ->
   gen_server:cast(BookPid, {new_order_single, Order}).
 
-modify_order(BookPid, #order{} = Order) when is_pid(BookPid) ->
-  gen_server:cast(BookPid, {change_order, Order}).
+try_modify_order(BookPid, #order_modify{} = Order) when is_pid(BookPid) ->
+  gen_server:call(BookPid, {try_change_order, Order}).
 
 try_cancel(BookPid, #order_cancel{} = Order) when is_pid(BookPid) ->
   gen_server:call(BookPid, {try_cancel_order, Order}).
@@ -67,16 +67,16 @@ handle_call({try_cancel_order, #order_cancel{} = Order}, _From, #state{book=Book
   Reply = n_orderbook:try_cancel_order(Order, Book),
   {reply, Reply, State};
 
+handle_call({try_change_order, #order_modify{} = Order}, _From, #state{book=Book} = State) ->
+  Reply = n_orderbook:try_change_order(Order, Book),
+  {reply, Reply, State};
+
 handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.
 
 handle_cast({new_order_single, #order{} = Order}, #state{book=Book} = State) ->
   n_orderbook:add_new_order_single(Order, Book),
 	{noreply, State};
-
-handle_cast({change_order, #order{} = Order}, #state{book=Book} = State) ->
-  n_orderbook:change_order(Order, Book),
-  {noreply, State};
 
 handle_cast({cancel_order, #order{} = Order}, #state{book=Book} = State) ->
   n_orderbook:cancel_order(Order, Book),

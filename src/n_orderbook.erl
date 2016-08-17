@@ -3,7 +3,7 @@
 -ifdef(EUNIT).
 -compile(export_all).
 -else.
--export([create/1, add_new_order_single/2, dump/1, qa_fillbook/1, try_cancel_order/2]).
+-export([create/1, add_new_order_single/2, dump/1, qa_fillbook/1, try_cancel_order/2, try_change_order/2]).
 -endif.
 
 -include("../include/secexchange.hrl").
@@ -19,7 +19,10 @@ create(Symbol) ->
   SellsT = ets:new(SellTName, [ordered_set, {keypos, #order.oid}]),
   #orderbook{sells=SellsT, buys=BuysT, lasttrade=0}.
 
-change_order(#order{} = Order, Book) ->
+try_change_order(#order_modify{side=buy} = Order, Book) ->
+  ok;
+  
+try_change_order(#order_modify{side=sell} = Order, Book) ->
   ok.
 
 try_cancel_order(#order_cancel{side=buy} = CancelOrder, #orderbook{buys=BuysT} = Book) ->

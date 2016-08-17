@@ -43,6 +43,17 @@ handle_new_order_single(#new_order_single{} = Order, Messages, Rest, #state{} = 
   fix_message_handler:handle_messages(Messages, Rest, State).
 
 
+handle_order_cancel_replace_request(#order_cancel_replace_request{} = Order, Messages, Rest, #state{} = State) ->
+
+  ModifyOrder = order_from_order_cancel_replace_request(Order),
+
+  BookPid = nexchange_bookregistry:get_book(ModifyOrder#order_modify.symbol),
+
+  nexchange_trading_book:try_modify_order(BookPid, ModifyOrder),
+
+  fix_message_handler:handle_messages(Messages, Rest, State).
+
+
 order_from_new_order_single(#new_order_single{} = Order) ->
 
   Fields = Order#new_order_single.fields,
@@ -77,9 +88,28 @@ order_cancel_from_cancel_order_request(#order_cancel_request{} = Req) ->
     to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
     from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
     symbol         = binary_to_list( proplists:get_value(symbol, Fields) ),
+    order_id       = Req#order_cancel_request.order_id,
     cl_ord_id      = Req#order_cancel_request.cl_ord_id,
     orig_cl_ord_id = Req#order_cancel_request.orig_cl_ord_id,
     side           = Req#order_cancel_request.side, 
     account        = Req#order_cancel_request.account,
+    parties        = Parties
+  }.
+
+order_from_order_cancel_replace_request(#order_cancel_replace_request{} = Req) -> 
+  Fields = Req#order_cancel_replace_request.fields,
+  Parties = fix_utils:extract_parties(Fields),
+
+  #order_modify{
+    to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+    from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
+    symbol         = binary_to_list( proplists:get_value(symbol, Fields) ),
+    order_qty      = proplists:get_value(order_qty, Fields),
+    order_id       = Req#order_cancel_replace_request.order_id,
+    cl_ord_id      = Req#order_cancel_replace_request.cl_ord_id,
+    orig_cl_ord_id = Req#order_cancel_replace_request.orig_cl_ord_id,
+    price          = Req#order_cancel_replace_request.price, 
+    side           = Req#order_cancel_replace_request.side, 
+    account        = Req#order_cancel_replace_request.account,
     parties        = Parties
   }.

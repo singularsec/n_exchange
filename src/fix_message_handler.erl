@@ -18,6 +18,13 @@ handle_messages([{#order_cancel_request{} = CR,_}|Messages], Rest, #state{} = St
   ?DBG("order_cancel_request ~n ~p", fix0:crack(CR)),
   fix_order_message_handler:handle_order_cancel_request(CR, Messages, Rest, State);
 
+% order_cancel_replace_request
+
+handle_messages([{#order_cancel_replace_request{} = CR,_}|Messages], Rest, #state{} = State) ->
+  ?DBG("order_cancel_replace_request ~n ~p", fix0:crack(CR)),
+  fix_order_message_handler:handle_order_cancel_replace_request(CR, Messages, Rest, State);
+
+
 handle_messages([{#quote_request{} = CR,_}|Messages], Rest, #state{} = State) ->
   ?DBG("quote_request ~n ~p", fix0:crack(CR)),
   fix_forward_message_handler:handle_quote_request(CR, Messages, Rest, State);
