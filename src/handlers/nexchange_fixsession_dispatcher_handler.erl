@@ -24,6 +24,11 @@ handle_event({accept, Order}, State) ->
     exec_report_dispatcher:dispatch(Report, Order),
 	{ok, State};
 
+handle_event({replace, Order}, State) ->
+    Report = exec_report:build_replace(Order),
+    exec_report_dispatcher:dispatch(Report, Order),
+    {ok, State};
+
 handle_event({full_fill, Order}, State) ->
     Report = exec_report:build_full_fill(Order),
     exec_report_dispatcher:dispatch(Report, Order),

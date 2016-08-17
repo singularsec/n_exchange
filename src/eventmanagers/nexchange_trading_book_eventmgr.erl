@@ -22,6 +22,10 @@ notify_accept(Order) ->
   error_logger:info_msg("notify_accept ~n ~p ~n", [Order]),
   gen_event:notify(nexchange_trading_book_eventmgr, {accept, Order}).
 
+-spec notify_replace('order') -> ok.
+notify_replace(Order) ->
+  error_logger:info_msg("notify_replace ~n ~p ~n", [Order]),
+  gen_event:notify(nexchange_trading_book_eventmgr, {replace, Order}).
 
 -spec notify_fill('order') -> ok.
 notify_fill(Order) ->

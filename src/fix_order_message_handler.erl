@@ -79,6 +79,7 @@ order_from_new_order_single(#new_order_single{} = Order) ->
     parties     = Parties
   }.
 
+
 order_cancel_from_cancel_order_request(#order_cancel_request{} = Req) -> 
   
   Fields = Req#order_cancel_request.fields,
@@ -95,6 +96,7 @@ order_cancel_from_cancel_order_request(#order_cancel_request{} = Req) ->
     account        = Req#order_cancel_request.account,
     parties        = Parties
   }.
+
 
 order_from_order_cancel_replace_request(#order_cancel_replace_request{} = Req) -> 
   Fields = Req#order_cancel_replace_request.fields,

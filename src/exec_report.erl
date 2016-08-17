@@ -26,6 +26,9 @@ build_cancel(#order_cancel_request{} = Order, Reason) ->
 build_rejection(#order{} = Order, Reason) ->
   from_order(Order, rejected, Reason).
 
+build_replace(#order{} = Order) ->
+  from_order(Order, replaced, undefined).
+
 % this is not exactly an execution report
 build_cancel_reject(#order_cancel_request{} = Order, Reason) ->
   cancel_reject_from_order(Order, Reason).

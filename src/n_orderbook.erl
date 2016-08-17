@@ -19,11 +19,29 @@ create(Symbol) ->
   SellsT = ets:new(SellTName, [ordered_set, {keypos, #order.oid}]),
   #orderbook{sells=SellsT, buys=BuysT, lasttrade=0}.
 
-try_change_order(#order_modify{side=buy} = Order, Book) ->
-  ok;
-  
-try_change_order(#order_modify{side=sell} = Order, Book) ->
-  ok.
+
+try_change_order(#order_modify{side=buy} = Order, #orderbook{buys=BuysT} = Book) ->
+  ClOrderId = Order#order_cancel.orig_cl_ord_id,
+  MatcherByClOrdId = fun (Item) -> if Item#order.cl_ord_id =:= ClOrderId -> Item; true -> nil end end,
+  MatchedBuy = find_in_ets_table(BuysT, nil, MatcherByClOrdId),
+  if 
+    MatchedBuy =:= nil -> not_found;
+    true -> 
+      modify_order(MatchedBuy, Order, Book), 
+      done
+  end;
+
+try_change_order(#order_modify{side=sell} = Order, #orderbook{sells=SellsT} = Book) ->
+  ClOrderId = Order#order_cancel.orig_cl_ord_id,
+  MatcherByClOrdId = fun (Item) -> if Item#order.cl_ord_id =:= ClOrderId -> Item; true -> nil end end,
+  MatchedSell = find_in_ets_table(SellsT, nil, MatcherByClOrdId),
+  if 
+    MatchedSell =:= nil -> not_found;
+    true -> 
+      modify_order(MatchedSell, Order, Book), 
+      done
+  end.
+
 
 try_cancel_order(#order_cancel{side=buy} = CancelOrder, #orderbook{buys=BuysT} = Book) ->
   ClOrderId = CancelOrder#order_cancel.orig_cl_ord_id,
@@ -46,6 +64,7 @@ try_cancel_order(#order_cancel{side=sell} = CancelOrder, #orderbook{sells=SellsT
       cancel_order(MatchedSell, "", Book),
       done
   end.
+
 
 dump(#orderbook{buys=BuysT, sells=SellsT}) ->
   Collector = fun (Item, Acc) -> [pretty_print_order(Item)] ++ Acc end,
@@ -278,6 +297,25 @@ cancel_order(Order, Reason, Book) ->
   send_cancel_notification(NewOrder, Reason),
   NewOrder.
 
+modify_order(#order{price=Price, qtd=Qtd, side=Side} = ExistingOrder, 
+             #order_modify{cl_ord_id=ClOrdId, price=NewPrice, order_qty=NewQtd}, 
+             Book) -> 
+  Table = get_table(Side, Book),
+  NormalizedPrice = normalize_price(NewPrice),
+  {Key, Time} = compose_key(NewPrice, Side),
+  UniqueId = erlang:unique_integer([positive]),
+  NewOrder = ExistingOrder#order{oid=Key,
+                                 time=Time,
+                                 id=integer_to_list(UniqueId),
+                                 price=NormalizedPrice, 
+                                 qtd=NewQtd, 
+                                 cl_ord_id=ClOrdId},
+  remove_from_ets(ExistingOrder, Book),
+  ets:insert(Table, NewOrder),
+  send_replace_notification(NewOrder),
+  match_new_order(NewOrder, Book),
+  NewOrder.
+
 % ----- ets tables
 
 replace_in_ets(#order{oid=Key, side=Side} = Order, Book) ->
@@ -302,6 +340,9 @@ send_filled_notification(Order) ->
 
 send_partial_fill_notification(Order) ->
     nexchange_trading_book_eventmgr:notify_partial_fill(Order).
+
+send_replace_notification(Order) ->
+  nexchange_trading_book_eventmgr:notify_replace(Order).
 
 notify_trade(MatchedOrder = #order{id=RefId, symbol=Symbol, from_sessionid=To},
              Order = #order{from_sessionid=From},
