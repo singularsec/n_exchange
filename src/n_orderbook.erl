@@ -100,10 +100,17 @@ qa_fillbook(#orderbook{buys=BuysT, sells=SellsT} = Book) ->
   ok = qa_fill_item(Sells, Book),
   dump(Book).
 
-add_new_order_single(#order{} = Order, Book) ->
-  SupportedOrderTypes = [ limit, market, stop, stoplimit, marketwithleftoverlimit ],
-  IsValid = lists:member(Order#order.order_type, SupportedOrderTypes),
-  add_new_order_single(Order, Book, IsValid).
+add_new_order_single(#order{price=Price} = Order, Book) ->
+  NormalizedPrice = normalize_price(Price),
+  if 
+    NormalizedPrice =:= 123.45 ->
+      send_reject_notification(Order, "perdeu prayboy");
+
+    true -> 
+      SupportedOrderTypes = [ limit, market, stop, stoplimit, marketwithleftoverlimit ],
+      IsValid = lists:member(Order#order.order_type, SupportedOrderTypes),
+      add_new_order_single(Order, Book, IsValid)
+  end.
 
 add_new_order_single(#order{} = Order, _Book, false) ->
   Msg = "Unsupported order type: " ++ atom_to_list(Order#order.order_type),
