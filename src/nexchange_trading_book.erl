@@ -63,6 +63,10 @@ handle_call(qa_fillbook, _From, #state{book=Book} = State) ->
   Reply = n_orderbook:qa_fillbook(Book),
   {reply, Reply, State};
 
+handle_call({try_cancel_order, #order_cancel{} = Order}, _From, #state{book=Book} = State) ->
+  Reply = n_orderbook:try_cancel_order(Order, Book),
+  {reply, Reply, State};
+
 handle_call(_Request, _From, State) ->
 	{stop, unimplemented, State}.
 
@@ -72,10 +76,6 @@ handle_cast({new_order_single, #order{} = Order}, #state{book=Book} = State) ->
 
 handle_cast({change_order, #order{} = Order}, #state{book=Book} = State) ->
   n_orderbook:change_order(Order, Book),
-  {noreply, State};
-
-handle_cast({try_cancel_order, #order_cancel{} = Order}, #state{book=Book} = State) ->
-  n_orderbook:try_cancel_order(Order, Book),
   {noreply, State};
 
 handle_cast({cancel_order, #order{} = Order}, #state{book=Book} = State) ->

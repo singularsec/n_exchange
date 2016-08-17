@@ -40,6 +40,13 @@ nexchange_trading_book:send_new_order_single(Petro, #order{symbol="PETR4",
 
 
 
+-- Cancel order 
+
+nexchange_trading_book:try_cancel(Petro, #order_cancel{symbol="PETR4", cl_ord_id="cl2", side=buy, account="acc2", from_sessionid="CCLR",to_sessionid="SOME"}).
+
+
+-- Replace order
+
 
 -- All
 
