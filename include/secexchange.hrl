@@ -97,7 +97,7 @@
                     buyer, seller
                     }).
 
--record(order_cancel, {cl_ord_id, 
+-record(order_cancel, {cl_ord_id, orig_cl_ord_id,
                     account,
                     from_sessionid,
                     to_sessionid,

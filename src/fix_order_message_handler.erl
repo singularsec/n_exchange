@@ -78,6 +78,7 @@ order_cancel_from_cancel_order_request(#order_cancel_request{} = Req) ->
     from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
     symbol         = binary_to_list( proplists:get_value(symbol, Fields) ),
     cl_ord_id      = Req#order_cancel_request.cl_ord_id,
+    orig_cl_ord_id = Req#order_cancel_request.orig_cl_ord_id,
     side           = Req#order_cancel_request.side, 
     account        = Req#order_cancel_request.account,
     parties        = Parties

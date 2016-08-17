@@ -23,7 +23,7 @@ change_order(#order{} = Order, Book) ->
   ok.
 
 try_cancel_order(#order_cancel{side=buy} = CancelOrder, #orderbook{buys=BuysT} = Book) ->
-  ClOrderId = CancelOrder#order_cancel.cl_ord_id,
+  ClOrderId = CancelOrder#order_cancel.orig_cl_ord_id,
   MatcherByClOrdId = fun (Item) -> if Item#order.cl_ord_id =:= ClOrderId -> Item; true -> nil end end,
   MatchedBuy = find_in_ets_table(BuysT, nil, MatcherByClOrdId),
   if 
@@ -34,7 +34,7 @@ try_cancel_order(#order_cancel{side=buy} = CancelOrder, #orderbook{buys=BuysT} =
   end;
 
 try_cancel_order(#order_cancel{side=sell} = CancelOrder, #orderbook{sells=SellsT} = Book) ->
-  ClOrderId = CancelOrder#order_cancel.cl_ord_id,
+  ClOrderId = CancelOrder#order_cancel.orig_cl_ord_id,
   MatcherByClOrdId = fun (Item) -> if Item#order.cl_ord_id =:= ClOrderId -> Item; true -> nil end end,
   MatchedSell = find_in_ets_table(SellsT, nil, MatcherByClOrdId),
   if 
