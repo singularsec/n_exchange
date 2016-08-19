@@ -27,7 +27,7 @@ build_rejection(#order{} = Order, Reason) ->
   from_order(Order, rejected, Reason).
 
 build_replace(#order{} = Order) ->
-  from_order(Order, replaced, undefined).
+  from_order(Order, replace, undefined).
 
 % this is not exactly an execution report
 build_cancel_reject(#order_cancel_request{} = Order, Reason) ->
@@ -172,7 +172,7 @@ from_order(#order_cancel_request{} = Order,
              price = #execreportprice{avg=0},
              contrabrokers = [735],
              parties = Parties,
-            %  text = Reason,
+             text = undefined,
              from_sessionid = FromSessId,
              to_sessionid = DestSessId
              };
@@ -182,9 +182,8 @@ from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = O
            ExecType, Reason) ->
 
   {Price,MatchingOrderId} = case Order#order.matches of
-    [{P, _Qtd, Other}|_] ->
-         {#execreportprice{avg=0, last=P, price=Order#order.price}, Other};
-    _ -> {#execreportprice{avg=0}, undefined}
+    [{P, _Qtd, Other}|_] -> {#execreportprice{avg=0, last=P, price=Order#order.price}, Other};
+    _                    -> {#execreportprice{avg=0}, undefined}
   end,
 
   Qtd = #execreportqtd{order_qtd= Order#order.qtd,
@@ -209,7 +208,7 @@ from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = O
               order_status = Order#order.order_status,
               order_type = Order#order.order_type,
               cl_ord_id = Order#order.cl_ord_id,
-              % orig_cl_ord_id= ,
+              orig_cl_ord_id = Order#order.orig_cl_ord_id,
               account = Order#order.account,
               symbol = Order#order.symbol,
               side = Order#order.side,

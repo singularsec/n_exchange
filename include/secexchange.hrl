@@ -1,6 +1,7 @@
 
 -record(order, {symbol,
                 cl_ord_id,
+                orig_cl_ord_id=undefined,
                 qtd=0,
                 qtd_filled=0,
                 qtd_left=0,

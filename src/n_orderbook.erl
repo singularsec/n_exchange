@@ -21,7 +21,7 @@ create(Symbol) ->
 
 
 try_change_order(#order_modify{side=buy} = Order, #orderbook{buys=BuysT} = Book) ->
-  ClOrderId = Order#order_cancel.orig_cl_ord_id,
+  ClOrderId = Order#order_modify.orig_cl_ord_id,
   MatcherByClOrdId = fun (Item) -> if Item#order.cl_ord_id =:= ClOrderId -> Item; true -> nil end end,
   MatchedBuy = find_in_ets_table(BuysT, nil, MatcherByClOrdId),
   if 
@@ -32,7 +32,7 @@ try_change_order(#order_modify{side=buy} = Order, #orderbook{buys=BuysT} = Book)
   end;
 
 try_change_order(#order_modify{side=sell} = Order, #orderbook{sells=SellsT} = Book) ->
-  ClOrderId = Order#order_cancel.orig_cl_ord_id,
+  ClOrderId = Order#order_modify.orig_cl_ord_id,
   MatcherByClOrdId = fun (Item) -> if Item#order.cl_ord_id =:= ClOrderId -> Item; true -> nil end end,
   MatchedSell = find_in_ets_table(SellsT, nil, MatcherByClOrdId),
   if 
@@ -304,7 +304,7 @@ cancel_order(Order, Reason, Book) ->
   send_cancel_notification(NewOrder, Reason),
   NewOrder.
 
-modify_order(#order{price=Price, qtd=Qtd, side=Side} = ExistingOrder, 
+modify_order(#order{qtd=Qtd, side=Side} = ExistingOrder, 
              #order_modify{cl_ord_id=ClOrdId, price=NewPrice, order_qty=NewQtd}, 
              Book) -> 
   Table = get_table(Side, Book),
@@ -316,7 +316,8 @@ modify_order(#order{price=Price, qtd=Qtd, side=Side} = ExistingOrder,
                                  id=integer_to_list(UniqueId),
                                  price=NormalizedPrice, 
                                  qtd=NewQtd, 
-                                 cl_ord_id=ClOrdId},
+                                 cl_ord_id=ClOrdId,
+                                 orig_cl_ord_id=ExistingOrder#order.cl_ord_id},
   remove_from_ets(ExistingOrder, Book),
   ets:insert(Table, NewOrder),
   send_replace_notification(NewOrder),
