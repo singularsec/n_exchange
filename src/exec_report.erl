@@ -35,7 +35,7 @@ build_cancel_reject(#order_cancel_request{} = Order, Reason) ->
 
 build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} = Leg, QuoteId) ->
   NewId = erlang:unique_integer([positive]),
-  Qtd = #execreportqtd{order_qtd= Leg#quote_request_leg.order_qty,
+  Qtd = #execreportqtd{order_qty= Leg#quote_request_leg.order_qty,
                        last= 0,
                        leaves= Leg#quote_request_leg.order_qty,
                        cum= 0},
@@ -65,7 +65,7 @@ build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
 build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} = Leg, QuoteId) ->
 
   NewId = erlang:unique_integer([positive]),
-  Qtd = #execreportqtd{order_qtd= Leg#quote_request_leg.order_qty,
+  Qtd = #execreportqtd{order_qty= Leg#quote_request_leg.order_qty,
                        last= 0,
                        leaves= 0,
                        cum= Leg#quote_request_leg.order_qty},
@@ -137,9 +137,9 @@ cancel_reject_from_order(#order_cancel_request{} = Order, Reason) ->
                from_sessionid = FromSessId,
                to_sessionid = DestSessId
                }.
- 
-from_order(#order_cancel_request{} = Order,
-           ExecType, _Reason) ->
+
+
+from_order(#order_cancel_request{} = Order, ExecType, _Reason) ->
 
   NewId = erlang:unique_integer([positive]),
 
@@ -165,7 +165,7 @@ from_order(#order_cancel_request{} = Order,
              side = Order#order_cancel_request.side,
              % transact_time= % 60=20150716-14:51:11.152 |  TransactTime
              % trade_date= ,% 75=20150716 |    <--- TradeDate
-             qtd = #execreportqtd{order_qtd= 0,
+             qtd = #execreportqtd{order_qty= 0,
                                   last= 0,
                                   leaves= 10,
                                   cum= 0},
@@ -178,15 +178,14 @@ from_order(#order_cancel_request{} = Order,
              };
 
 
-from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = Order,
-           ExecType, Reason) ->
+from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = Order, ExecType, Reason) ->
 
   {Price,MatchingOrderId} = case Order#order.matches of
     [{P, _Qtd, Other}|_] -> {#execreportprice{avg=0, last=P, price=Order#order.price}, Other};
     _                    -> {#execreportprice{avg=0}, undefined}
   end,
 
-  Qtd = #execreportqtd{order_qtd= Order#order.qtd,
+  Qtd = #execreportqtd{order_qty= Order#order.order_qty,
                        last= Order#order.qtd_last,
                        leaves= Order#order.qtd_left,
                        cum= Order#order.qtd_filled},
@@ -239,12 +238,14 @@ record_to_proplist(#execreportqtd{} = Rec) ->
 record_to_proplist(#execreportprice{} = Rec) ->
   lists:zip(record_info(fields, execreportprice), tl(tuple_to_list(Rec))).
 
-% -record(execreportqtd,   {order_qtd, last, leaves, cum}).
+% -record(execreportqtd,   {order_qty, last, leaves, cum}).
 %   leaves_qty,
 %   cum_qty,
 %   last_qty,
 %   underlying_last_qty,
 to_fix44_body_qtd([]) -> [];
+to_fix44_body_qtd([{order_qty, undefined} | Rest])  -> to_fix44_body_qtd(Rest);
+to_fix44_body_qtd([{order_qty, Qtd} | Rest])        -> [{order_qty, Qtd}] ++ to_fix44_body_qtd(Rest);
 to_fix44_body_qtd([{last, undefined} | Rest])  -> to_fix44_body_qtd(Rest);
 to_fix44_body_qtd([{last, Qtd} | Rest])        -> [{last_qty, Qtd}] ++ to_fix44_body_qtd(Rest);
 to_fix44_body_qtd([{leaves, undefined} | Rest])-> to_fix44_body_qtd(Rest);

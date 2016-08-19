@@ -76,7 +76,7 @@ qa_fill_item([#order{} = Order| Rest], Book) ->
   NewMatchingOrder = #order{
         symbol     = Order#order.symbol,
         cl_ord_id  = "cl1",
-        qtd        = Order#order.qtd_left,
+        order_qty  = Order#order.qtd_left,
         qtd_left   = Order#order.qtd_left,
         price      = Order#order.price / 10000,
         price_type = Order#order.price_type,
@@ -135,7 +135,7 @@ insert_order(#order{side=_OtherSide} = Order, Book) ->
   send_reject_notification(Order, "Unsupported side: " ++ atom_to_list(_OtherSide) ),
   false.
 
-insert_order_into(#order{price=Price, qtd=Qtd, side=Side} = Order, Table) ->
+insert_order_into(#order{price=Price, order_qty=Qtd, side=Side} = Order, Table) ->
   NormalizedPrice = normalize_price(Price),
   {Key, Time} = compose_key(Price, Side),
   UniqueId = erlang:unique_integer([positive]),
@@ -143,7 +143,7 @@ insert_order_into(#order{price=Price, qtd=Qtd, side=Side} = Order, Table) ->
                          id=integer_to_list(UniqueId),
                          time=Time,
                          order_status=new,
-                         qtd_filled=0, qtd_left=Qtd, qtd_last=0,
+                         order_qty=Qtd, qtd_filled=0, qtd_left=Qtd, qtd_last=0,
                          price=NormalizedPrice},
   ets:insert(Table, NewOrder),
   send_accept_notification(NewOrder),
@@ -152,23 +152,23 @@ insert_order_into(#order{price=Price, qtd=Qtd, side=Side} = Order, Table) ->
 % nothing to do
 match_new_order(false, _Book) -> ok;
 
-match_new_order(#order{side=Side,qtd=Qtd,order_type=market,timeinforce=TiF} = Order, Book) ->
+match_new_order(#order{side=Side,order_qty=Qtd,order_type=market,timeinforce=TiF} = Order, Book) ->
   OtherSideT = other_side(Side, Book),
   Plan = create_matching_plan(OtherSideT, Side, 0, Qtd),
   execute_plan_applying_timeinforce(Order, Plan, TiF, Book);
 
-match_new_order(#order{side=Side,qtd=Qtd,price=Price,order_type=limit,timeinforce=TiF} = Order, Book) ->
+match_new_order(#order{side=Side,order_qty=Qtd,price=Price,order_type=limit,timeinforce=TiF} = Order, Book) ->
   OtherSideT = other_side(Side, Book),
   Plan = create_matching_plan(OtherSideT, Side, Price, Qtd),
   execute_plan_applying_timeinforce(Order, Plan, TiF, Book);
 
-match_new_order(#order{side=Side,qtd=Qtd,price=Price,order_type=stop,timeinforce=TiF} = Order, Book) ->
+match_new_order(#order{side=Side,order_qty=Qtd,price=Price,order_type=stop,timeinforce=TiF} = Order, Book) ->
   error(unimplemented);
 
-match_new_order(#order{side=Side,qtd=Qtd,price=Price,order_type=stoplimit,timeinforce=TiF} = Order, Book) ->
+match_new_order(#order{side=Side,order_qty=Qtd,price=Price,order_type=stoplimit,timeinforce=TiF} = Order, Book) ->
   error(unimplemented);
 
-match_new_order(#order{side=Side,qtd=Qtd,price=Price,order_type=marketwithleftoverlimit,timeinforce=TiF} = Order, Book) ->
+match_new_order(#order{side=Side,order_qty=Qtd,price=Price,order_type=marketwithleftoverlimit,timeinforce=TiF} = Order, Book) ->
   error(unimplemented).
 
 % traverse table of available orders selecting compatible orders.
@@ -259,7 +259,7 @@ execute_plan(#order{qtd_filled=Filled,qtd_left=LeavesQtd}=Order, [MatchedOrder|R
 
 
 decrement_qtd_and_record(ByHowMany,
-                         #order{qtd=Original, qtd_filled=Filled, qtd_left=LeavesQtd, qtd_last=Last, matches=MList}=Order,
+                         #order{order_qty=Original, qtd_filled=Filled, qtd_left=LeavesQtd, qtd_last=Last, matches=MList}=Order,
                          #order{id=OtherId} = _WithOrder, Price) ->
   % TODO: use Original to assert consistency
   NewStatus =
@@ -304,8 +304,8 @@ cancel_order(Order, Reason, Book) ->
   send_cancel_notification(NewOrder, Reason),
   NewOrder.
 
-modify_order(#order{qtd=Qtd, side=Side} = ExistingOrder, 
-             #order_modify{cl_ord_id=ClOrdId, price=NewPrice, order_qty=NewQtd}, 
+modify_order(#order{side=Side} = ExistingOrder, 
+             #order_modify{cl_ord_id=ClOrdId, price=NewPrice}, 
              Book) -> 
   Table = get_table(Side, Book),
   NormalizedPrice = normalize_price(NewPrice),
@@ -315,7 +315,7 @@ modify_order(#order{qtd=Qtd, side=Side} = ExistingOrder,
                                  time=Time,
                                  id=integer_to_list(UniqueId),
                                  price=NormalizedPrice, 
-                                 qtd=NewQtd, 
+                                 % qtd=NewQtd, 
                                  cl_ord_id=ClOrdId,
                                  orig_cl_ord_id=ExistingOrder#order.cl_ord_id},
   remove_from_ets(ExistingOrder, Book),

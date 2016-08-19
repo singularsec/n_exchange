@@ -2,7 +2,7 @@
 -record(order, {symbol,
                 cl_ord_id,
                 orig_cl_ord_id=undefined,
-                qtd=0,
+                order_qty=0, % original qtd
                 qtd_filled=0,
                 qtd_left=0,
                 qtd_last=0,
@@ -29,7 +29,7 @@
 
 -record(fillbook,  {sells=[], buys=[]}).
 
--record(execreportqtd,   {order_qtd, last, leaves, cum}).
+-record(execreportqtd,   {order_qty, last, leaves, cum}).
 -record(execreportprice, {avg, last, price}).
 -record(execparty,       {id, source, role}).
 
@@ -55,6 +55,7 @@
                      time_in_force,
                      transact_time, trade_date,
                      qtd,    % execreportqtd#
+                     % order_qty = undefined,
                      price,  % execreportprice#
                      contrabrokers=[],
                      parties=[],

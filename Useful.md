@@ -48,6 +48,9 @@ nexchange_trading_book:try_cancel(Petro, #order_cancel{symbol="PETR4", cl_ord_id
 -- Replace order
 
 
+nexchange_trading_book:try_replace(Petro, #order_cancel{symbol="PETR4", cl_ord_id="cl2", side=buy, account="acc2", from_sessionid="CCLR",to_sessionid="SOME"}).
+
+
 -- All
 
 rr(nexchange_trading_book). 
