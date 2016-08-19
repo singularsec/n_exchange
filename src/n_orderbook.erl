@@ -50,7 +50,7 @@ try_cancel_order(#order_cancel{side=buy} = CancelOrder, #orderbook{buys=BuysT} =
   if 
     MatchedBuy =:= nil -> not_found;
     true -> 
-      cancel_order(MatchedBuy, "", Book), 
+      cancel_order(MatchedBuy, undefined, Book), 
       done
   end;
 
@@ -61,7 +61,7 @@ try_cancel_order(#order_cancel{side=sell} = CancelOrder, #orderbook{sells=SellsT
   if 
     MatchedSell =:= nil -> not_found;
     true -> 
-      cancel_order(MatchedSell, "", Book),
+      cancel_order(MatchedSell, undefined, Book),
       done
   end.
 
@@ -102,8 +102,9 @@ qa_fillbook(#orderbook{buys=BuysT, sells=SellsT} = Book) ->
 
 add_new_order_single(#order{price=Price} = Order, Book) ->
   NormalizedPrice = normalize_price(Price),
+  error_logger:error_msg("Price is ~p ~n", [NormalizedPrice]),
   if 
-    NormalizedPrice =:= 123.45 ->
+    NormalizedPrice =:= 1230000 ->
       send_reject_notification(Order, "perdeu prayboy");
 
     true -> 

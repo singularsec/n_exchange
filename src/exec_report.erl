@@ -172,7 +172,7 @@ from_order(#order_cancel_request{} = Order, ExecType, _Reason) ->
              price = #execreportprice{avg=0},
              contrabrokers = [735],
              parties = Parties,
-             text = undefined,
+             % text = undefined,
              from_sessionid = FromSessId,
              to_sessionid = DestSessId
              };
@@ -292,6 +292,7 @@ to_fix44_body([{order_status, undefined}|Rest]) -> to_fix44_body(Rest);
 
 to_fix44_body([{order_status, V}|Rest]) ->
   [{ord_status,V}] ++ to_fix44_body(Rest);
+
 
 to_fix44_body([{order_type, undefined}|Rest]) -> to_fix44_body(Rest);
 
