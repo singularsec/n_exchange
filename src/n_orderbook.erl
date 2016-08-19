@@ -100,12 +100,20 @@ qa_fillbook(#orderbook{buys=BuysT, sells=SellsT} = Book) ->
   ok = qa_fill_item(Sells, Book),
   dump(Book).
 
-add_new_order_single(#order{price=Price} = Order, Book) ->
+add_new_order_single(#order{price=Price,side=Side,order_qty=Qtd} = Order, Book) ->
   NormalizedPrice = normalize_price(Price),
-  error_logger:error_msg("Price is ~p ~n", [NormalizedPrice]),
   if 
     NormalizedPrice =:= 1230000 ->
-      send_reject_notification(Order, "perdeu prayboy");
+      % magic number causes a rejection!
+      {Key, Time} = compose_key(Price, Side),
+      UniqueId = erlang:unique_integer([positive]),
+      NewOrder = Order#order{oid=Key,
+                             id=integer_to_list(UniqueId),
+                             time=Time,
+                             order_status=canceled,
+                             order_qty=Qtd, qtd_filled=0, qtd_left=Qtd, qtd_last=0,
+                             price=NormalizedPrice},
+      send_reject_notification(NewOrder, "perdeu prayboy");
 
     true -> 
       SupportedOrderTypes = [ limit, market, stop, stoplimit, marketwithleftoverlimit ],
