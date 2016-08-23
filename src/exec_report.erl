@@ -40,9 +40,9 @@ build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
                        leaves= Leg#quote_request_leg.order_qty,
                        cum= 0},
   Price = #execreportprice{avg=0, last=0, price=Leg#quote_request_leg.price},
-  Fields     = QR#quote_request.fields,
-  FromSessId = proplists:get_value(target_comp_id, Fields),
-  DestSessId = proplists:get_value(sender_comp_id, Fields),
+  Fields = QR#quote_request.fields,
+  % FromSessId = proplists:get_value(target_comp_id, Fields),
+  % DestSessId = proplists:get_value(sender_comp_id, Fields),
   Id = "000000" ++ QuoteId,
   #execreport{order_id = list_to_binary(Id),
               secondary_order_id = list_to_binary("800_" ++ Id),
@@ -59,8 +59,10 @@ build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               price = Price,
               ord_rej_reason = 99, % needs constant?
               security_exchange = <<"XBSP">>,
-              from_sessionid = DestSessId,
-              to_sessionid = FromSessId
+              % from_sessionid = DestSessId,
+              % to_sessionid = FromSessId
+              to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+              from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
               }.
 
 build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} = Leg, QuoteId) ->
@@ -71,9 +73,10 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
                        leaves= 0,
                        cum= Leg#quote_request_leg.order_qty},
   Price = #execreportprice{avg=0, last=0, price=Leg#quote_request_leg.price},
-  Fields     = QR#quote_request.fields,
-  FromSessId = proplists:get_value(target_comp_id, Fields),
-  DestSessId = proplists:get_value(sender_comp_id, Fields),
+  Fields = QR#quote_request.fields,
+
+  % FromSessId = proplists:get_value(target_comp_id, Fields),
+  % DestSessId = proplists:get_value(sender_comp_id, Fields),
   Id = "000000" ++ QuoteId,
   #execreport{order_id = Id,
               secondary_order_id = "800_" ++ Id,
@@ -89,8 +92,11 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               qtd = Qtd,
               price = Price,
               unique_trade_id = NewId,
-              from_sessionid = DestSessId,
-              to_sessionid = FromSessId}.
+              %from_sessionid = DestSessId,
+              %to_sessionid = FromSessId
+              to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+              from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+              }.
 
 report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report,
                   Seq) ->
