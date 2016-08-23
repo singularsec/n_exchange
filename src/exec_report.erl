@@ -59,8 +59,8 @@ build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               price = Price,
               ord_rej_reason = 99, % needs constant?
               security_exchange = <<"XBSP">>,
-              from_sessionid = FromSessId,
-              to_sessionid = DestSessId
+              from_sessionid = DestSessId,
+              to_sessionid = FromSessId
               }.
 
 build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} = Leg, QuoteId) ->
@@ -89,8 +89,8 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               qtd = Qtd,
               price = Price,
               unique_trade_id = NewId,
-              from_sessionid = FromSessId,
-              to_sessionid = DestSessId}.
+              from_sessionid = DestSessId,
+              to_sessionid = FromSessId}.
 
 report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report,
                   Seq) ->
