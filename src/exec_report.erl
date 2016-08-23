@@ -59,8 +59,9 @@ build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               price = Price,
               ord_rej_reason = 99, % needs constant?
               security_exchange = <<"XBSP">>,
-              from_sessionid = DestSessId,
-              to_sessionid = FromSessId}.
+              from_sessionid = FromSessId,
+              to_sessionid = DestSessId
+              }.
 
 build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} = Leg, QuoteId) ->
 
