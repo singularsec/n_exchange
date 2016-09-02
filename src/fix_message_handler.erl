@@ -122,7 +122,12 @@ send(MsgType, Body, Fields, #state{socket=Socket, our_seq=Seq} = State) ->
   ReplyBin = fix0:pack(MsgType, Body, Seq, Target, Sender),
 
   % Reply = iolist_to_binary(ReplyBin),
-  ok = gen_tcp:send(Socket, ReplyBin),
+  if 
+    Socket =:= undefined -> 
+      ?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix0:dump(iolist_to_binary(ReplyBin))]);
+    true -> 
+      ok = gen_tcp:send(Socket, ReplyBin)
+  end,
 
   % ?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]),
 

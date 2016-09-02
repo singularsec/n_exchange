@@ -26,7 +26,6 @@ dispatch(Report, SessionId) when is_list(SessionId) ->
 
 
 
-
 multi_cast([], _Request) -> ok;
 
 multi_cast([Pid|_], Request) ->
