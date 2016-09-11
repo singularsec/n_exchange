@@ -55,7 +55,7 @@ handle_cast({send, #execreport{} = Report},
   Bin = exec_report:report_to_fix_bin(Report, Seq),
   gen_tcp:send(Socket, Bin),
 
-  error_logger:info_msg("sending exec report ~p ~n", [fix0:dump(Bin)]),
+  % error_logger:info_msg("sending exec report ~p ~n", [fix0:dump(Bin)]),
 
   % error_logger:info_msg("sending exec report done ~p ~n", [Bin]),
   {noreply, State#state{our_seq=Seq+1}};

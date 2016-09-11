@@ -11,7 +11,7 @@
 % http://www.bmfbovespa.com.br/en-us/services/trading-platforms/puma-trading-system/EntryPoint-quick-reference.asp
 
 handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("new_order_single ~n ~p", fix0:crack(Order)),
+  % ?DBG("new_order_single ~n ~p", fix0:crack(Order)),
   fix_order_message_handler:handle_new_order_single(Order, Messages, Rest, State);
 
 handle_messages([{#order_cancel_request{} = CR,_}|Messages], Rest, #state{} = State) ->

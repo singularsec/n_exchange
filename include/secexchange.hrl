@@ -25,7 +25,7 @@
                 parties=[]
                 }).
 
--record(orderbook, {sells=[], buys=[], lasttrade=0}).
+-record(orderbook, {sells=[], buys=[], lasttrade=0, symbol}).
 
 -record(fillbook,  {sells=[], buys=[]}).
 

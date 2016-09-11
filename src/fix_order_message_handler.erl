@@ -9,6 +9,7 @@
 -include("../include/secexchange.hrl").
 
 handle_order_cancel_request(#order_cancel_request{} = Req, Messages, Rest, #state{} = State) ->
+  ?DBG("handle_order_cancel_request ~n ~p", fix0:crack(Req)),
   
   CancelOrder = order_cancel_from_cancel_order_request(Req),
 
@@ -55,7 +56,6 @@ handle_order_cancel_replace_request(#order_cancel_replace_request{} = Order, Mes
 
 
 order_from_new_order_single(#new_order_single{} = Order) ->
-
   Fields = Order#new_order_single.fields,
   Parties = fix_utils:extract_parties(Fields),
 

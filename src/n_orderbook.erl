@@ -17,7 +17,7 @@ create(Symbol) ->
   SellTName = list_to_atom( atom_to_list(sell) ++ "_" ++ Symbol ),
   BuysT  = ets:new(BuyTName,  [ordered_set, {keypos, #order.oid}]),
   SellsT = ets:new(SellTName, [ordered_set, {keypos, #order.oid}]),
-  #orderbook{sells=SellsT, buys=BuysT, lasttrade=0}.
+  #orderbook{sells=SellsT, buys=BuysT, lasttrade=0, symbol=Symbol}.
 
 
 try_change_order(#order_modify{side=buy} = Order, #orderbook{buys=BuysT} = Book) ->
@@ -66,11 +66,11 @@ try_cancel_order(#order_cancel{side=sell} = CancelOrder, #orderbook{sells=SellsT
   end.
 
 
-dump(#orderbook{buys=BuysT, sells=SellsT}) ->
+dump(#orderbook{buys=BuysT, sells=SellsT, symbol=S}) ->
   Collector = fun (Item, Acc) -> [pretty_print_order(Item)] ++ Acc end,
   Buys  = traverse_ets_table(BuysT,  nil, Collector, []),
   Sells = traverse_ets_table(SellsT, nil, Collector, []),
-  {Buys, Sells}.
+  {S, Buys, Sells}.
 
 qa_fill_item([#order{} = Order| Rest], Book) ->
   NewMatchingOrder = #order{
