@@ -61,8 +61,8 @@ build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               security_exchange = <<"XBSP">>,
               % from_sessionid = DestSessId,
               % to_sessionid = FromSessId
-              to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
-              from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+              to_sessionid   = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
+              from_sessionid = binary_to_list( proplists:get_value(target_comp_id, Fields) )
               }.
 
 build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} = Leg, QuoteId) ->
@@ -94,8 +94,8 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               unique_trade_id = NewId,
               %from_sessionid = DestSessId,
               %to_sessionid = FromSessId
-              to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
-              from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+              to_sessionid   = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
+              from_sessionid = binary_to_list( proplists:get_value(target_comp_id, Fields) )
               }.
 
 report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report,
