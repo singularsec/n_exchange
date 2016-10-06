@@ -133,13 +133,13 @@ confirm_and_execute(QR, [#quote_request_leg{} = Leg | Rest], #state{} = State) -
   NewState = fix_message_handler:send(quote_status_report, PrimaryFields, Fields, State), % AI
 
   ReportNew = exec_report:build_accept_for_quote_request_leg(QR, Leg, QuoteId),
-  exec_report_dispatcher:dispatch(ReportNew),
+  exec_report_dispatcher:dispatch2(ReportNew),
   Bin1 = exec_report:report_to_fix_bin(ReportNew, 100),
   R1 = fix0:dump(Bin1),
   ?DBG("New ~p~n", [R1]),
 
   ReportFilled = exec_report:build_filled_for_quote_request_leg(QR, Leg, QuoteId),
-  exec_report_dispatcher:dispatch(ReportFilled),
+  exec_report_dispatcher:dispatch2(ReportFilled),
   Bin2 = exec_report:report_to_fix_bin(ReportFilled, 100),
   R2 = fix0:dump(Bin2),
   ?DBG("Filled ~p~n", [R2]),

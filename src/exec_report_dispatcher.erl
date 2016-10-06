@@ -1,12 +1,15 @@
 -module(exec_report_dispatcher).
 
--export([dispatch/1, dispatch/2]).
+-export([dispatch/1, dispatch/2, dispatch2/1]).
 
 -include("log.hrl").
 % -include("../include/fix_session.hrl").
 % -include("../include/admin44.hrl").
 -include("../include/business44_xp.hrl").
 -include("../include/secexchange.hrl").
+
+dispatch2(Report = #execreport{from_sessionid=SessionId}) ->
+  dispatch(Report, SessionId).
 
 dispatch(Report = #cancelreject{to_sessionid=SessionId}) ->
   dispatch(Report, SessionId);
