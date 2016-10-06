@@ -39,7 +39,7 @@ build_accept_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
                        last= 0,
                        leaves= Leg#quote_request_leg.order_qty,
                        cum= 0},
-  Price = #execreportprice{avg=0, last=0, price=Leg#quote_request_leg.price},
+  Price = #execreportprice{avg=Leg#quote_request_leg.price * 10000.0, last=Leg#quote_request_leg.price * 10000.0, price=Leg#quote_request_leg.price * 10000.0},
   Fields = QR#quote_request.fields,
   % FromSessId = proplists:get_value(target_comp_id, Fields),
   % DestSessId = proplists:get_value(sender_comp_id, Fields),
@@ -72,7 +72,7 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
                        last= 0,
                        leaves= 0,
                        cum= Leg#quote_request_leg.order_qty},
-  Price = #execreportprice{avg=0, last=0, price=Leg#quote_request_leg.price},
+  Price = #execreportprice{avg=Leg#quote_request_leg.price * 10000.0, last=Leg#quote_request_leg.price * 10000.0, price=Leg#quote_request_leg.price * 10000.0},
   Fields = QR#quote_request.fields,
 
   % FromSessId = proplists:get_value(target_comp_id, Fields),
