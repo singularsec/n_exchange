@@ -102,6 +102,75 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
               }.
 
+build_accept_for_position_maintenance_request(#position_maintenance_request{} = QR, QuoteId) ->
+  NewId = erlang:unique_integer([positive]),
+  Qtd = #execreportqtd{order_qty= Leg#quote_request_leg.order_qty,
+    last= 0,
+    leaves= Leg#quote_request_leg.order_qty,
+    cum= 0},
+  Rate = list_to_float(binary_to_list(Leg#quote_request_leg.fixed_rate)),
+  Px = ((Leg#quote_request_leg.price * 10000.0) * Rate) + (Leg#quote_request_leg.price * 10000.0),
+  Price = #execreportprice{avg=Px, last=Px, price=Px},
+  Fields = QR#quote_request.fields,
+  % FromSessId = proplists:get_value(target_comp_id, Fields),
+  % DestSessId = proplists:get_value(sender_comp_id, Fields),
+  Id = "000000" ++ QuoteId,
+  #execreport{order_id = list_to_binary(Id),
+    secondary_order_id = list_to_binary("800_" ++ Id),
+    exec_id = NewId,
+    exec_type = new,
+    order_status = new,
+    order_type = limit,
+    cl_ord_id = Leg#quote_request_leg.cl_ord_id,
+    account = Leg#quote_request_leg.account,
+    symbol = Leg#quote_request_leg.symbol,
+    side = Leg#quote_request_leg.side,
+    time_in_force = fill_or_kill,
+    qtd = Qtd,
+    price = Price,
+    ord_rej_reason = 99, % needs constant?
+    security_exchange = <<"XBSP">>,
+    % from_sessionid = DestSessId,
+    % to_sessionid = FromSessId
+    to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+    from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+  }.
+
+build_execution_report_for_position_maintenance(#position_maintenance_request{} = QR, QuoteId) ->
+
+  NewId = erlang:unique_integer([positive]),
+  Qtd = #execreportqtd{order_qty= Leg#quote_request_leg.order_qty,
+    last= Leg#quote_request_leg.order_qty,
+    leaves= 0,
+    cum= Leg#quote_request_leg.order_qty},
+  Rate = list_to_float(binary_to_list(Leg#quote_request_leg.fixed_rate)),
+  Px = ((Leg#quote_request_leg.price * 10000.0) * Rate) + (Leg#quote_request_leg.price * 10000.0),
+  Price = #execreportprice{avg=Px, last=Px, price=Px},
+  Fields = QR#quote_request.fields,
+
+  % FromSessId = proplists:get_value(target_comp_id, Fields),
+  % DestSessId = proplists:get_value(sender_comp_id, Fields),
+  Id = "000000" ++ QuoteId,
+  #execreport{order_id = Id,
+    secondary_order_id = "800_" ++ Id,
+    exec_id = NewId,
+    exec_type = trade,
+    order_status = filled,
+    order_type = limit,
+    cl_ord_id = Leg#quote_request_leg.cl_ord_id,
+    account = Leg#quote_request_leg.account,
+    symbol = Leg#quote_request_leg.symbol,
+    side = Leg#quote_request_leg.side,
+    time_in_force = fill_or_kill,
+    qtd = Qtd,
+    price = Price,
+    unique_trade_id = NewId,
+    %from_sessionid = DestSessId,
+    %to_sessionid = FromSessId
+    to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+    from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+  }.
+
 report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report,
                   Seq) ->
   ReportPropList = record_to_proplist(Report),

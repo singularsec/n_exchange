@@ -55,6 +55,12 @@ decode_message([{msg_type,quote_status_report}|Message]) -> % QuoteStatusReport
 decode_message([{msg_type,quote_request_reject}|Message]) -> % QuoteRequestReject
   decode_fields(Message, #quote_request_reject{}, quote_request_reject, 11).
 
+decode_message([{msg_type,position_maintenance_request}|Message]) -> % PositionMaintenanceRequest
+  decode_fields(Message, #position_maintenance_request{}, position_maintenance_request, 21);
+
+decode_message([{msg_type,position_maintenance_report}|Message]) -> % PositionMaintenanceReport
+  decode_fields(Message, #position_maintenance_report{}, position_maintenance_report, 24);
+
 field_index(heartbeat, sending_time) -> 2;
 field_index(heartbeat, test_req_id) -> 3;
 field_index(logon, sending_time) -> 2;
@@ -580,6 +586,46 @@ field_index(quote_request_reject, private_quote) -> 6;
 field_index(quote_request_reject, unique_trade_id) -> 7;
 field_index(quote_request_reject, execute_underlying_trade) -> 8;
 field_index(quote_request_reject, text) -> 9;
+field_index(position_maintenance_request, sending_time) -> 2;
+field_index(position_maintenance_request, pos_req_id) -> 3;
+field_index(position_maintenance_request, pos_trans_type) -> 4;
+field_index(position_maintenance_request, pos_maint_action) -> 5;
+field_index(position_maintenance_request, orig_pos_req_ref_id) -> 6;
+field_index(position_maintenance_request, pos_maint_rpt_ref_id) -> 7;
+field_index(position_maintenance_request, clearing_business_date) -> 8;
+field_index(position_maintenance_request, no_party_ids) -> 9;
+field_index(position_maintenance_request, party_id_source) -> 10;
+field_index(position_maintenance_request, party_id) -> 11;
+field_index(position_maintenance_request, party_role) -> 12;
+field_index(position_maintenance_request, account) -> 13;
+field_index(position_maintenance_request, account_type) -> 14;
+field_index(position_maintenance_request, transact_time) -> 15;
+field_index(position_maintenance_request, no_positions) -> 16;
+field_index(position_maintenance_request, pos_type) -> 17;
+field_index(position_maintenance_request, long_qty) -> 18;
+field_index(position_maintenance_request, threshold_amount) -> 19;
+field_index(position_maintenance_report, sending_time) -> 2;
+field_index(position_maintenance_report, pos_maint_rpt_id) -> 3;
+field_index(position_maintenance_report, pos_trans_type) -> 4;
+field_index(position_maintenance_report, pos_req_id) -> 5;
+field_index(position_maintenance_report, pos_maint_action) -> 6;
+field_index(position_maintenance_report, orig_pos_req_ref_id) -> 7;
+field_index(position_maintenance_report, pos_maint_status) -> 8;
+field_index(position_maintenance_report, pos_maint_result) -> 9;
+field_index(position_maintenance_report, clearing_business_date) -> 10;
+field_index(position_maintenance_report, no_party_ids) -> 11;
+field_index(position_maintenance_report, party_id_source) -> 12;
+field_index(position_maintenance_report, party_id) -> 13;
+field_index(position_maintenance_report, party_role) -> 14;
+field_index(position_maintenance_report, trade_id) -> 15;
+field_index(position_maintenance_report, account) -> 16;
+field_index(position_maintenance_report, account_type) -> 17;
+field_index(position_maintenance_report, symbol) -> 18;
+field_index(position_maintenance_report, transact_time) -> 19;
+field_index(position_maintenance_report, no_positions) -> 20;
+field_index(position_maintenance_report, pos_type) -> 21;
+field_index(position_maintenance_report, long_qty) -> 22;
+field_index(position_maintenance_report, threshold_amount) -> 23;
 field_index(_,_) -> undefined.
 
 decode_fields([{Code,Value}|Message], Record, RecordName, Default) ->
@@ -1507,6 +1553,7 @@ field_by_number(<<"953">>) -> nested3_party_sub_id;
 field_by_number(<<"954">>) -> nested3_party_sub_id_type;
 field_by_number(<<"955">>) -> leg_contract_settl_month;
 field_by_number(<<"956">>) -> leg_interest_accrual_date;
+field_by_number(<<"1003">>) -> trade_id;
 field_by_number(<<"1171">>) -> private_quote;
 field_by_number(<<"1180">>) -> appl_id;
 field_by_number(<<"5149">>) -> memo;
@@ -4578,6 +4625,7 @@ number_by_field(nested3_party_sub_id) -> <<"953">>;
 number_by_field(nested3_party_sub_id_type) -> <<"954">>;
 number_by_field(leg_contract_settl_month) -> <<"955">>;
 number_by_field(leg_interest_accrual_date) -> <<"956">>;
+number_by_field(trade_id) -> <<"1003">>;
 number_by_field(private_quote) -> <<"1171">>;
 number_by_field(appl_id) -> <<"1180">>;
 number_by_field(memo) -> <<"5149">>;
@@ -4651,6 +4699,8 @@ message_by_number(<<"AF">>) -> order_mass_status_request;
 message_by_number(<<"R">>) -> quote_request;
 message_by_number(<<"AI">>) -> quote_status_report;
 message_by_number(<<"AG">>) -> quote_request_reject;
+message_by_number(<<"AL">>) -> position_maintenance_request;
+message_by_number(<<"AM">>) -> position_maintenance_report;
 message_by_number(Type) when is_binary(Type) -> Type.
 
 number_by_message(heartbeat) -> <<"0">>;
@@ -4670,6 +4720,8 @@ number_by_message(order_mass_status_request) -> <<"AF">>;
 number_by_message(quote_request) -> <<"R">>;
 number_by_message(quote_status_report) -> <<"AI">>;
 number_by_message(quote_request_reject) -> <<"AG">>;
+number_by_message(position_maintenance_request) -> <<"AL">>;
+number_by_message(position_maintenance_report) -> <<"AM">>;
 number_by_message(Type) when is_binary(Type) -> Type.
 
 parse_num(Bin) -> parse_num_erl(Bin).

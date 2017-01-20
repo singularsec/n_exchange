@@ -24,10 +24,14 @@ handle_messages([{#order_cancel_replace_request{} = CR,_}|Messages], Rest, #stat
   ?DBG("order_cancel_replace_request ~n ~p", fix0:crack(CR)),
   fix_order_message_handler:handle_order_cancel_replace_request(CR, Messages, Rest, State);
 
-
 handle_messages([{#quote_request{} = CR,_}|Messages], Rest, #state{} = State) ->
   ?DBG("quote_request ~n ~p", fix0:crack(CR)),
   fix_forward_message_handler:handle_quote_request(CR, Messages, Rest, State);
+
+handle_messages([{#position_maintenance_request{} = CR,_}|Messages], Rest, #state{} = State) ->
+  ?DBG("position maintenance request  ~n ~p", fix0:crack(CR)),
+  fix_option_execution_handler:handle_option_execution(CR, Messages, Rest, State);
+
 
 handle_messages([{#heartbeat{} = _Hb,_}|Messages], Rest, #state{} = State) ->
   % ?DBG("heartbeat ~p", _Hb#heartbeat.fields),

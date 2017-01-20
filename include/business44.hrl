@@ -1946,25 +1946,26 @@
   pos_req_id,
   pos_trans_type,
   pos_maint_action,
-  orig_pos_req_ref_id,
-  pos_maint_rpt_ref_id,
+  orig_pos_req_ref_id, %not required
+  pos_maint_rpt_ref_id, %not required
   clearing_business_date,
-  settl_sess_id,
-  settl_sess_sub_id,
+	no_party_ids,
+	party_id_source,
+	party_id,
+	party_role,
   account,
-  acct_id_source,
-  account_type,
-  currency,
+  account_type, %not required
+  symbol,
   transact_time,
-  adjustment_type,
-  contrary_instruction_indicator,
-  prior_spread_indicator,
-  threshold_amount,
-  text,
-  encoded_text,
-  legs = [],
-  underlyings = [],
-  trading_sessions = [],
+	no_positions,
+	pos_type,
+	long_qty,
+  threshold_amount, %not required
+  %threshold_percent, -- novo, nao obrigatorio
+  %memo,              -- novo, nao obrigatorio  
+  %legs = [],
+  %underlyings = [],
+  %trading_sessions = [],
   fields = []
 }).
 
@@ -1978,20 +1979,26 @@
   pos_maint_status,
   pos_maint_result,
   clearing_business_date,
-  settl_sess_id,
-  settl_sess_sub_id,
+no_party_ids,
+party_id_source,
+party_id,
+party_role,
+trade_id,
   account,
-  acct_id_source,
   account_type,
-  currency,
+  symbol,
   transact_time,
-  adjustment_type,
+no_positions,
+pos_type,
+long_qty,
   threshold_amount,
-  text,
-  encoded_text,
-  legs = [],
-  underlyings = [],
-  trading_sessions = [],
+  %threshold_percent, -- novo, nao obrigatorio
+  %memo,              -- novo, nao obrigatorio  
+  %text,
+  %encoded_text,
+  %legs = [],
+  %underlyings = [],
+  %trading_sessions = [],
   fields = []
 }).
 
