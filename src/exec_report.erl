@@ -102,65 +102,58 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
               }.
 
-build_accept_for_position_maintenance_request(#position_maintenance_request{} = QR, QuoteId) ->
+build_report_for_position_maintenance_request(#position_maintenance_request{} = PR, TradeId) ->
   NewId = erlang:unique_integer([positive]),
-  Qtd = #execreportqtd{order_qty= Leg#quote_request_leg.order_qty,
-    last= 0,
-    leaves= Leg#quote_request_leg.order_qty,
-    cum= 0},
-  Rate = list_to_float(binary_to_list(Leg#quote_request_leg.fixed_rate)),
-  Px = ((Leg#quote_request_leg.price * 10000.0) * Rate) + (Leg#quote_request_leg.price * 10000.0),
-  Price = #execreportprice{avg=Px, last=Px, price=Px},
-  Fields = QR#quote_request.fields,
-  % FromSessId = proplists:get_value(target_comp_id, Fields),
-  % DestSessId = proplists:get_value(sender_comp_id, Fields),
-  Id = "000000" ++ QuoteId,
-  #execreport{order_id = list_to_binary(Id),
-    secondary_order_id = list_to_binary("800_" ++ Id),
-    exec_id = NewId,
-    exec_type = new,
-    order_status = new,
-    order_type = limit,
-    cl_ord_id = Leg#quote_request_leg.cl_ord_id,
-    account = Leg#quote_request_leg.account,
-    symbol = Leg#quote_request_leg.symbol,
-    side = Leg#quote_request_leg.side,
-    time_in_force = fill_or_kill,
-    qtd = Qtd,
-    price = Price,
-    ord_rej_reason = 99, % needs constant?
-    security_exchange = <<"XBSP">>,
-    % from_sessionid = DestSessId,
-    % to_sessionid = FromSessId
-    to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
-    from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+
+  %Fields = PR#position_maintenance_request.fields,
+
+  #position_maintenance_report{
+    pos_maint_rpt_id = PR#position_maintenance_request.pos_maint_rpt_ref_id,
+    pos_trans_type = PR#position_maintenance_request.pos_trans_type,
+    pos_req_id = PR#position_maintenance_request.pos_req_id,
+    pos_maint_action = PR#position_maintenance_request.pos_maint_action,
+    pos_maint_status = 3, %COMPLETED
+    %pos_maint_result, reason for rejection
+    clearing_business_date = PR#position_maintenance_request.clearing_business_date,
+    no_party_ids = PR#position_maintenance_request.no_party_ids,
+    party_id_source = PR#position_maintenance_request.party_id_source,
+    party_id = PR#position_maintenance_request.party_id,
+    party_role = PR#position_maintenance_request.party_role,
+    trade_id = NewId,
+    account = PR#position_maintenance_request.account,
+    account_type = PR#position_maintenance_request.account_type,
+    symbol = PR#position_maintenance_request.symbol,
+    %transact_time = PR#position_maintenance_request,
+    no_positions = PR#position_maintenance_request.no_positions,
+    pos_type = PR#position_maintenance_request.pos_type,
+    long_qty = PR#position_maintenance_request.long_qty,
+    threshold_amount = PR#position_maintenance_request.threshold_amount
   }.
 
-build_execution_report_for_position_maintenance(#position_maintenance_request{} = QR, QuoteId) ->
-
+build_execution_report_for_position_maintenance(#position_maintenance_request{} = PR, TradeId) ->
   NewId = erlang:unique_integer([positive]),
-  Qtd = #execreportqtd{order_qty= Leg#quote_request_leg.order_qty,
-    last= Leg#quote_request_leg.order_qty,
+  Qtd = #execreportqtd{order_qty= PR#position_maintenance_request.long_qty,
+    last= PR#position_maintenance_request.long_qty,
     leaves= 0,
-    cum= Leg#quote_request_leg.order_qty},
-  Rate = list_to_float(binary_to_list(Leg#quote_request_leg.fixed_rate)),
-  Px = ((Leg#quote_request_leg.price * 10000.0) * Rate) + (Leg#quote_request_leg.price * 10000.0),
-  Price = #execreportprice{avg=Px, last=Px, price=Px},
-  Fields = QR#quote_request.fields,
+    cum= PR#position_maintenance_request.long_qty},
+  %Px = ((Leg#quote_request_leg.price * 10000.0) * Rate) + (Leg#quote_request_leg.price * 10000.0),
+  Price = 33, %#execreportprice{avg=Px, last=Px, price=Px}, preciso do preco de execucao
+  Fields = PR#position_maintenance_request,
 
   % FromSessId = proplists:get_value(target_comp_id, Fields),
   % DestSessId = proplists:get_value(sender_comp_id, Fields),
-  Id = "000000" ++ QuoteId,
-  #execreport{order_id = Id,
+  Id = "000000" ++ TradeId,
+  #execreport{
+    order_id = Id,
     secondary_order_id = "800_" ++ Id,
     exec_id = NewId,
     exec_type = trade,
     order_status = filled,
     order_type = limit,
-    cl_ord_id = Leg#quote_request_leg.cl_ord_id,
-    account = Leg#quote_request_leg.account,
-    symbol = Leg#quote_request_leg.symbol,
-    side = Leg#quote_request_leg.side,
+    cl_ord_id = PR#position_maintenance_request.pos_req_id,
+    account = PR#position_maintenance_request.account,
+    symbol = PR#position_maintenance_request.symbol,
+    %side = PR#position_maintenance_request.side,
     time_in_force = fill_or_kill,
     qtd = Qtd,
     price = Price,

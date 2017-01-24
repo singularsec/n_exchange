@@ -1,4 +1,3 @@
-
 -module(option_execution_handler).
 
 -export([handle/2, test/0]).
@@ -13,99 +12,80 @@
 test() -> 
   InitialState = #state{our_seq=1, socket=undefined},
 
-  QR = #position_maintenance_request{
-		sending_time= <<"20160823-23:45:17.354">>, 
-		quote_req_id= <<"31639280_0">>,
-		private_quote= <<"Y">>,
-		execute_underlying_trade= <<"0">>,
-		related_sym = [],
+  PR = #position_maintenance_request{
+		sending_time= <<"20170125-10:10:10.354">>,
+    pos_req_id = <<"28733_0">>,
+    pos_trans_type = <<"1">>,
+    pos_maint_action = <<"1">>,
+    clearing_business_date = <<"20170124">>,
+    no_party_ids = <<"1">>,
+    party_id_source = <<"D">>,
+    party_id = <<"98">>,
+    party_role = <<"36">>,
+    account = <<"4004">>,
+    symbol = <<"BBDCM41E">>,
+    transact_time = <<"20170124-18:13:53">>,
+    no_positions = <<"1">>,
+    pos_type = <<"EX">>,
+    long_qty = <<"100">>,
 		fields = [{msg_seq_num,17},
-	            {sender_comp_id,<<"CLEAR_3">>},
-	            {target_comp_id,<<"XPOMS">>},
-	            {no_related_sym,2},
-	            {symbol,<<"PETR4T">>},
-	            {security_exchange,<<"XBSP">>},
-	            {side,buy},
-	            {cl_ord_id,<<"35678_0">>},
-	            {order_qty,100},
-	            {settl_type,regular},
-	            {days_to_settlement,<<"30">>},
-	            {fixed_rate,<<"0.012">>},
-	            {account,<<"704008">>},
-	            {transact_time,<<"20160823-20:45:17">>},
-	            {price,10},
-	            {symbol,<<"PETR4T">>},
-	            {security_exchange,<<"XBSP">>},
-	            {side,sell},
-	            {cl_ord_id,<<"35679_0">>},
-	            {order_qty,100},
-	            {settl_type,regular},
-	            {days_to_settlement,<<"30">>},
-	            {fixed_rate,<<"0.012">>},
-	            {account,<<"7003286">>},
-	            {transact_time,<<"20160823-20:45:17">>},
-	            {price,10}
+	            {sender_comp_id,<<"CCLRA801">>},
+	            {target_comp_id,<<"OE104C">>},
+	            {symbol,<<"BBDCM41E">>},
+	            {cl_ord_id,<<"12345_0">>},
+	            {account,<<"4004">>},
+	            {transact_time,<<"20170124-18:13:53">>}
 	           ]
   },
 
-  handle(QR, InitialState).
+  handle(PR, InitialState).
 
 
-handle(#position_maintenance_request{} = QR, State) ->
-  
-  NewState = confirm_and_execute(QR, State),
+handle(#position_maintenance_request{} = PR, State) ->
+
+  % send a Position Maintenance Report and a exec report position
+
+  NewState = confirm_and_execute(PR, State),
 
   NewState.
 
-
- % [{sending_time,<<"20160115-20:17:10.628">>},
- %  {quote_req_id,<<"31568_0">>},
- %  {private_quote,<<"Y">>},
- %  {unique_trade_id,undefined},
- %  {execute_underlying_trade,<<"0">>},
- %  {related_sym,[]},
- %  {fields,[{msg_seq_num,712},
- %           {sender_comp_id,<<"CLEAR">>},
- %           {target_comp_id,<<"XPOMS">>},
-confirm_and_execute(QR, #state{} = State) ->
-  QuoteId = list_to_binary ( integer_to_list( State#state.our_seq ) ),
+confirm_and_execute(PR, #state{} = State) ->
+  TradeId = list_to_binary ( integer_to_list( State#state.our_seq ) ),
   PrimaryFields = [
-    {account, Leg#quote_request_leg.account },
-    {order_qty, Leg#quote_request_leg.order_qty },
-    {price, Leg#quote_request_leg.price },
-    {side, Leg#quote_request_leg.side },
-    {symbol, Leg#quote_request_leg.symbol },
-    {transact_time, Leg#quote_request_leg.transact_time },
-    {settl_type, Leg#quote_request_leg.settl_type },
-    {quote_id, QuoteId}, % unique
-    {quote_req_id, QR#quote_request.quote_req_id },
-    {quote_status, 0 },
-    {private_quote, QR#quote_request.private_quote },
-    {days_to_settlement, Leg#quote_request_leg.days_to_settlement },
-    {fixed_rate, Leg#quote_request_leg.fixed_rate },
-    {execute_underlying_trade, QR#quote_request.execute_underlying_trade },
-    {quote_status_report_type, 1 },
-    {quote_status_response_to, 1 }
+    {pos_req_id, PR#position_maintenance_request.pos_req_id },
+    {pos_trans_type, PR#position_maintenance_request.pos_trans_type },
+    {pos_maint_action, PR#position_maintenance_request.pos_maint_action },
+    {clearing_business_date, PR#position_maintenance_request.clearing_business_date },
+    {no_party_ids, PR#position_maintenance_request.no_party_ids },
+    {party_id_source, PR#position_maintenance_request.party_id_source },
+    {party_id, PR#position_maintenance_request.account },
+    {party_role, PR#position_maintenance_request.party_role },
+    {account, PR#position_maintenance_request.account },
+    {account_type, PR#position_maintenance_request.account_type },
+    {transact_time, PR#position_maintenance_request.transact_time },
+    {no_positions, PR#position_maintenance_request.no_positions },
+    {long_qty, PR#position_maintenance_request.long_qty },
+    {trade_id, TradeId}
   ],
-  FromSessId = proplists:get_value(sender_comp_id, QR#position_maintenance_request.fields),
-  DestSessId = proplists:get_value(target_comp_id, QR#position_maintenance_request.fields),
-  Fields = [{cl_ord_id, QR#position_maintenance_request.fields.cl_ord_id},
+  FromSessId = proplists:get_value(sender_comp_id, PR#position_maintenance_request.fields),
+  DestSessId = proplists:get_value(target_comp_id, PR#position_maintenance_request.fields),
+  Fields = [{cl_ord_id, PR#position_maintenance_request.pos_req_id},
             {target_comp_id, DestSessId},
             {sender_comp_id, FromSessId}],
 
-  NewState = fix_message_handler:send(position_maintenance_report, PrimaryFields, Fields, State), % AI
+  %NewState = fix_message_handler:send(position_maintenance_report, PrimaryFields, Fields, State), % AI
 
-  ReportNew = exec_report:build_accept_for_position_maintenance_request(QR, QuoteId),
-  exec_report_dispatcher:dispatch2(ReportNew),
-  Bin1 = exec_report:report_to_fix_bin(ReportNew, 100),
+  ReportPosition = exec_report:build_report_for_position_maintenance_request(PR, TradeId),
+  exec_report_dispatcher:dispatch3(ReportPosition),
+  Bin1 = exec_report:report_to_fix_bin(ReportPosition, 100),
   R1 = fix0:dump(Bin1),
-  ?DBG("Report ~p~n", [R1]),
+  ?DBG("Report Position ~p~n", [R1]),
 
-  ReportExecution = exec_report:build_execution_report_for_position_maintenance(QR, QuoteId),
+  ReportExecution = exec_report:build_execution_report_for_position_maintenance(PR, TradeId),
   exec_report_dispatcher:dispatch2(ReportExecution),
   Bin2 = exec_report:report_to_fix_bin(ReportExecution, 100),
   R2 = fix0:dump(Bin2),
-  ?DBG("Executed ~p~n", [R2]),
+  ?DBG("Executed Position ~p~n", [R2]);
 
-confirm_and_execute(_, [], State) -> State.
+confirm_and_execute(_, State) -> State.
 
