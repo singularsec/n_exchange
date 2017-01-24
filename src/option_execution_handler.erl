@@ -51,31 +51,31 @@ handle(#position_maintenance_request{} = PR, State) ->
 
 confirm_and_execute(PR, #state{} = State) ->
   TradeId = list_to_binary ( integer_to_list( State#state.our_seq ) ),
-  PrimaryFields = [
-    {pos_req_id, PR#position_maintenance_request.pos_req_id },
-    {pos_trans_type, PR#position_maintenance_request.pos_trans_type },
-    {pos_maint_action, PR#position_maintenance_request.pos_maint_action },
-    {clearing_business_date, PR#position_maintenance_request.clearing_business_date },
-    {no_party_ids, PR#position_maintenance_request.no_party_ids },
-    {party_id_source, PR#position_maintenance_request.party_id_source },
-    {party_id, PR#position_maintenance_request.account },
-    {party_role, PR#position_maintenance_request.party_role },
-    {account, PR#position_maintenance_request.account },
-    {account_type, PR#position_maintenance_request.account_type },
-    {transact_time, PR#position_maintenance_request.transact_time },
-    {no_positions, PR#position_maintenance_request.no_positions },
-    {long_qty, PR#position_maintenance_request.long_qty },
-    {trade_id, TradeId}
-  ],
-  FromSessId = proplists:get_value(sender_comp_id, PR#position_maintenance_request.fields),
-  DestSessId = proplists:get_value(target_comp_id, PR#position_maintenance_request.fields),
-  Fields = [{cl_ord_id, PR#position_maintenance_request.pos_req_id},
-            {target_comp_id, DestSessId},
-            {sender_comp_id, FromSessId}],
+  %PrimaryFields = [
+  %  {pos_req_id, PR#position_maintenance_request.pos_req_id },
+  %  {pos_trans_type, PR#position_maintenance_request.pos_trans_type },
+  %  {pos_maint_action, PR#position_maintenance_request.pos_maint_action },
+  %  {clearing_business_date, PR#position_maintenance_request.clearing_business_date },
+  %  {no_party_ids, PR#position_maintenance_request.no_party_ids },
+  %  {party_id_source, PR#position_maintenance_request.party_id_source },
+  %  {party_id, PR#position_maintenance_request.account },
+  %  {party_role, PR#position_maintenance_request.party_role },
+  %  {account, PR#position_maintenance_request.account },
+  %  {account_type, PR#position_maintenance_request.account_type },
+  %  {transact_time, PR#position_maintenance_request.transact_time },
+  %  {no_positions, PR#position_maintenance_request.no_positions },
+  %  {long_qty, PR#position_maintenance_request.long_qty },
+  %  {trade_id, TradeId}
+  %],
+  %FromSessId = proplists:get_value(sender_comp_id, PR#position_maintenance_request.fields),
+  %DestSessId = proplists:get_value(target_comp_id, PR#position_maintenance_request.fields),
+  %Fields = [{cl_ord_id, PR#position_maintenance_request.pos_req_id},
+  %          {target_comp_id, DestSessId},
+  %          {sender_comp_id, FromSessId}],
 
   %NewState = fix_message_handler:send(position_maintenance_report, PrimaryFields, Fields, State), % AI
 
-  ReportPosition = exec_report:build_report_for_position_maintenance_request(PR, TradeId),
+  ReportPosition = exec_report:build_report_for_position_maintenance_request(PR),
   exec_report_dispatcher:dispatch3(ReportPosition),
   Bin1 = exec_report:report_to_fix_bin(ReportPosition, 100),
   R1 = fix0:dump(Bin1),

@@ -53,13 +53,10 @@ decode_message([{msg_type,quote_status_report}|Message]) -> % QuoteStatusReport
   decode_fields(Message, #quote_status_report{}, quote_status_report, 25);
 
 decode_message([{msg_type,quote_request_reject}|Message]) -> % QuoteRequestReject
-  decode_fields(Message, #quote_request_reject{}, quote_request_reject, 11).
+  decode_fields(Message, #quote_request_reject{}, quote_request_reject, 11);
 
 decode_message([{msg_type,position_maintenance_request}|Message]) -> % PositionMaintenanceRequest
-  decode_fields(Message, #position_maintenance_request{}, position_maintenance_request, 21);
-
-decode_message([{msg_type,position_maintenance_report}|Message]) -> % PositionMaintenanceReport
-  decode_fields(Message, #position_maintenance_report{}, position_maintenance_report, 24);
+  decode_fields(Message, #position_maintenance_request{}, position_maintenance_request, 21).
 
 field_index(heartbeat, sending_time) -> 2;
 field_index(heartbeat, test_req_id) -> 3;

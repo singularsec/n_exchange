@@ -102,11 +102,9 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
               }.
 
-build_report_for_position_maintenance_request(#position_maintenance_request{} = PR, TradeId) ->
+build_report_for_position_maintenance_request(#position_maintenance_request{} = PR) ->
   NewId = erlang:unique_integer([positive]),
-
   %Fields = PR#position_maintenance_request.fields,
-
   #position_maintenance_report{
     pos_maint_rpt_id = PR#position_maintenance_request.pos_maint_rpt_ref_id,
     pos_trans_type = PR#position_maintenance_request.pos_trans_type,
@@ -138,8 +136,7 @@ build_execution_report_for_position_maintenance(#position_maintenance_request{} 
     cum= PR#position_maintenance_request.long_qty},
   %Px = ((Leg#quote_request_leg.price * 10000.0) * Rate) + (Leg#quote_request_leg.price * 10000.0),
   Price = 33, %#execreportprice{avg=Px, last=Px, price=Px}, preciso do preco de execucao
-  Fields = PR#position_maintenance_request,
-
+  Fields = PR#position_maintenance_request.fields,
   % FromSessId = proplists:get_value(target_comp_id, Fields),
   % DestSessId = proplists:get_value(sender_comp_id, Fields),
   Id = "000000" ++ TradeId,
