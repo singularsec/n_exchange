@@ -575,36 +575,3 @@
   %trading_sessions = [],
   fields = []
 }).
-
--record(position_maintenance_report, {
-  sending_time,
-  pos_maint_rpt_id,
-  pos_trans_type,
-  pos_req_id,
-  pos_maint_action,
-  orig_pos_req_ref_id,
-  pos_maint_status,
-  pos_maint_result,
-  clearing_business_date,
-no_party_ids,
-party_id_source,
-party_id,
-party_role,
-trade_id,
-  account,
-  account_type,
-  symbol,
-  transact_time,
-no_positions,
-pos_type,
-long_qty,
-  threshold_amount,
-  %threshold_percent, -- novo, nao obrigatorio
-  %memo,              -- novo, nao obrigatorio  
-  %text,
-  %encoded_text,
-  %legs = [],
-  %underlyings = [],
-  %trading_sessions = [],
-  fields = []
-}).
