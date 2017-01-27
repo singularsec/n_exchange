@@ -1,11 +1,11 @@
 -module(option_execution_handler).
 
--export([handle/2, test/0]).
+-export([handle/2, test/0, confirm_and_execute/2]).
 
 -include("log.hrl").
 -include("../include/fix_session.hrl").
--include("../include/admin44_xp.hrl").
--include("../include/business44_xp.hrl").
+-include("../include/admin44.hrl").
+-include("../include/business44.hrl").
 -include("../include/secexchange.hrl").
 
 
@@ -78,13 +78,13 @@ confirm_and_execute(PR, #state{} = State) ->
   ReportPosition = exec_report:build_report_for_position_maintenance_request(PR),
   exec_report_dispatcher:dispatch3(ReportPosition),
   Bin1 = exec_report:report_to_fix_bin(ReportPosition, 100),
-  R1 = fix0:dump(Bin1),
+  R1 = fix:dump(Bin1),
   ?DBG("Report Position ~p~n", [R1]),
 
   ReportExecution = exec_report:build_execution_report_for_position_maintenance(PR, TradeId),
   exec_report_dispatcher:dispatch2(ReportExecution),
   Bin2 = exec_report:report_to_fix_bin(ReportExecution, 100),
-  R2 = fix0:dump(Bin2),
+  R2 = fix:dump(Bin2),
   ?DBG("Executed Position ~p~n", [R2]);
 
 confirm_and_execute(_, State) -> State.

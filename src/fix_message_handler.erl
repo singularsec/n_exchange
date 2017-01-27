@@ -4,28 +4,28 @@
 
 -include("log.hrl").
 -include("../include/fix_session.hrl").
--include("../include/admin44_xp.hrl").
--include("../include/business44_xp.hrl").
+-include("../include/admin44.hrl").
+-include("../include/business44.hrl").
 -include("../include/secexchange.hrl").
 
 % http://www.bmfbovespa.com.br/en-us/services/trading-platforms/puma-trading-system/EntryPoint-quick-reference.asp
 
 handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = State) ->
-  % ?DBG("new_order_single ~n ~p", fix0:crack(Order)),
+  % ?DBG("new_order_single ~n ~p", fix:crack(Order)),
   fix_order_message_handler:handle_new_order_single(Order, Messages, Rest, State);
 
 handle_messages([{#order_cancel_request{} = CR,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("order_cancel_request ~n ~p", fix0:crack(CR)),
+  ?DBG("order_cancel_request ~n ~p", fix:crack(CR)),
   fix_order_message_handler:handle_order_cancel_request(CR, Messages, Rest, State);
 
 % order_cancel_replace_request
 
 handle_messages([{#order_cancel_replace_request{} = CR,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("order_cancel_replace_request ~n ~p", fix0:crack(CR)),
+  ?DBG("order_cancel_replace_request ~n ~p", fix:crack(CR)),
   fix_order_message_handler:handle_order_cancel_replace_request(CR, Messages, Rest, State);
 
 handle_messages([{#quote_request{} = CR,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("quote_request ~n ~p", fix0:crack(CR)),
+  ?DBG("quote_request ~n ~p", fix:crack(CR)),
   fix_forward_message_handler:handle_quote_request(CR, Messages, Rest, State);
 
 handle_messages([{#heartbeat{} = _Hb,_}|Messages], Rest, #state{} = State) ->
@@ -47,7 +47,7 @@ handle_messages([{#resend_request{begin_seq_no=_BeginSeq,end_seq_no=_EndSeq} = M
 
 handle_messages([{#logon{} = Logon,Bin}|Messages], Rest, #state{} = State) ->
 
-  fix0:crack(Logon),
+  fix:crack(Logon),
   ?DBG("logon bin ~n~p~n", [Bin]),
 
   Sender   = proplists:get_value(sender_comp_id, Logon#logon.fields),
@@ -105,24 +105,23 @@ handle_messages([{Msg,_Bin}|Messages], Rest, #state{} = State) ->
   ?DBG("unhandled ~n~p~n~p~n~p~n~p~n", Msg),
   handle_messages(Messages, Rest, State);
 
-
 handle_messages([], Rest, State) ->
   {noreply, State#state{prevbuffer=Rest}};
 
-handle_messages([{#position_maintenance_request{} = PR,_}], [], #state{} = State) ->
-  ?DBG("position maintenance request  ~n ~p", fix0:crack(PR)),
+handle_messages([{#position_maintenance_request{} = PR,_}|Messages], Rest, #state{} = State) ->
+  ?DBG("position maintenance request  ~n ~p", fix:crack(PR)),
   option_execution_handler:handle(PR, State).
 
 send(MsgType, Body, Fields, #state{socket=Socket, our_seq=Seq} = State) ->
   Sender = proplists:get_value(sender_comp_id, Fields),
   Target = proplists:get_value(target_comp_id, Fields),
 
-  ReplyBin = fix0:pack(MsgType, Body, Seq, Target, Sender),
+  ReplyBin = fix:pack(MsgType, Body, Seq, Target, Sender),
 
   % Reply = iolist_to_binary(ReplyBin),
   if 
     Socket =:= undefined -> 
-      ?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix0:dump(iolist_to_binary(ReplyBin))]);
+      ?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]);
     true -> 
       ok = gen_tcp:send(Socket, ReplyBin)
   end,

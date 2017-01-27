@@ -4,8 +4,8 @@
 
 -include("log.hrl").
 -include("../include/fix_session.hrl").
--include("../include/admin44_xp.hrl").
--include("../include/business44_xp.hrl").
+-include("../include/admin44.hrl").
+-include("../include/business44.hrl").
 -include("../include/secexchange.hrl").
 
 build_accept(#order{} = Order) ->
@@ -114,9 +114,9 @@ build_report_for_position_maintenance_request(#position_maintenance_request{} = 
     %pos_maint_result, reason for rejection
     clearing_business_date = PR#position_maintenance_request.clearing_business_date,
     no_party_ids = PR#position_maintenance_request.no_party_ids,
-    party_id_source = PR#position_maintenance_request.party_id_source,
-    party_id = PR#position_maintenance_request.party_id,
-    party_role = PR#position_maintenance_request.party_role,
+    %party_id_source = PR#position_maintenance_request.party_id_source,
+    %party_id = PR#position_maintenance_request.party_id,
+    %party_role = PR#position_maintenance_request.party_role,
     trade_id = NewId,
     account = PR#position_maintenance_request.account,
     account_type = PR#position_maintenance_request.account_type,
@@ -166,7 +166,7 @@ report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId}
   ReportPropList = record_to_proplist(Report),
   Body = to_fix44_body(ReportPropList),
   % error_logger:info_msg("Body ~p ~n", [Body]),
-  fix0:pack(execution_report, Body, Seq, DestSessId, FromSessId);
+  fix:pack(execution_report, Body, Seq, DestSessId, FromSessId);
 
 
 report_to_fix_bin(#cancelreject{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report,
@@ -174,7 +174,7 @@ report_to_fix_bin(#cancelreject{from_sessionid=FromSessId,to_sessionid=DestSessI
   ReportPropList = record_to_proplist(Report),
   Body = to_fix44_body(ReportPropList),
   % error_logger:info_msg("Body ~p ~n", [Body]),
-  fix0:pack(order_cancel_reject, Body, Seq, DestSessId, FromSessId).
+  fix:pack(order_cancel_reject, Body, Seq, DestSessId, FromSessId).
 
 
 cancel_reject_from_order(#order_cancel_request{} = Order, Reason) ->
