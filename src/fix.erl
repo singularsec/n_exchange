@@ -20,7 +20,10 @@ record_to_proplist(#quote_request{} = Rec) ->
     lists:zip(record_info(fields, quote_request), tl(tuple_to_list(Rec)));
 
 record_to_proplist(#order_cancel_request{} = Rec) ->
-    lists:zip(record_info(fields, order_cancel_request), tl(tuple_to_list(Rec))).
+    lists:zip(record_info(fields, order_cancel_request), tl(tuple_to_list(Rec)));
+
+record_to_proplist(#position_maintenance_request{} = Rec) ->
+  lists:zip(record_info(fields, position_maintenance_request), tl(tuple_to_list(Rec))).
 
 crack(#new_order_single{} = NOS) ->
     Prop = record_to_proplist(NOS),
@@ -34,10 +37,13 @@ crack(#quote_request{} = NOS) ->
     Prop = record_to_proplist(NOS),
     ?DBG("quote_request ~n ~p ~n", [Prop]);
 
+crack(#position_maintenance_request{} = NOS) ->
+  Prop = record_to_proplist(NOS),
+  ?DBG("position maintenance request ~n ~p ~n", [Prop]);
+
 crack(#logon{} = NOS) ->
     Prop = record_to_proplist(NOS),
     ?DBG("logon ~n ~p ~n", [Prop]).
-
 
 %% @doc packs fix message into binary
 -spec pack(atom(), list(), non_neg_integer(), any(), any()) -> iolist().
