@@ -58,8 +58,8 @@ is_event_manager_setup_correctly(Pid) ->
 
 limit_matching_time_in_force_is_immediateorcancel_test(EventMgrPid) ->
   Book = n_orderbook:create("PETR5"),
-  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, qtd=100, side=sell, cl_ord_id="t1"}, Book),
-  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, qtd=100, side=buy,  cl_ord_id="t2", timeinforce=immediateorcancel}, Book),
+  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, order_qty=100, side=sell, cl_ord_id="t1"}, Book),
+  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, order_qty=100, side=buy,  cl_ord_id="t2", timeinforce=immediateorcancel}, Book),
   All = collect_events(EventMgrPid),
   % error_logger:info_msg("R ~p ~n", [All]),
   assertMatch(
@@ -72,8 +72,8 @@ limit_matching_time_in_force_is_immediateorcancel_test(EventMgrPid) ->
 
 limit_matching_time_in_force_is_immediateorcancel_leftover_test(EventMgrPid) ->
   Book = n_orderbook:create("PETR5"),
-  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, qtd=50,  side=sell, cl_ord_id="t1"}, Book),
-  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, qtd=100, side=buy,  cl_ord_id="t2", timeinforce=immediateorcancel}, Book),
+  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, order_qty=50,  side=sell, cl_ord_id="t1"}, Book),
+  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, order_qty=100, side=buy,  cl_ord_id="t2", timeinforce=immediateorcancel}, Book),
   All = collect_events(EventMgrPid),
   % error_logger:info_msg("R ~p ~n", [All]),
   assertMatch(
@@ -88,8 +88,8 @@ limit_matching_time_in_force_is_immediateorcancel_leftover_test(EventMgrPid) ->
 
 limit_sell_first_test(EventMgrPid) ->
   Book = n_orderbook:create("PETR5"),
-  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, qtd=100, side=sell, cl_ord_id="t1"}, Book),
-  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, qtd=100, side=buy, cl_ord_id="t2"}, Book),
+  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, order_qty=100, side=sell, cl_ord_id="t1"}, Book),
+  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, order_qty=100, side=buy, cl_ord_id="t2"}, Book),
   All = collect_events(EventMgrPid),
   % error_logger:info_msg("R ~p ~n", [All]),
   assertMatch(
@@ -103,8 +103,8 @@ limit_sell_first_test(EventMgrPid) ->
 
 limit_buy_first_test(EventMgrPid) ->
   Book = n_orderbook:create("PETR5"),
-  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, qtd=100, side=buy, cl_ord_id="t1"}, Book),
-  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, qtd=100, side=sell, cl_ord_id="t2"}, Book),
+  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, order_qty=100, side=buy, cl_ord_id="t1"}, Book),
+  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, order_qty=100, side=sell, cl_ord_id="t2"}, Book),
   All = collect_events(EventMgrPid),
   % error_logger:info_msg("R ~p ~n", [All]),
   assertMatch(
@@ -118,9 +118,9 @@ limit_buy_first_test(EventMgrPid) ->
 
 limit_buy_first_2_test(EventMgrPid) ->
   Book = n_orderbook:create("PETR5"),
-  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, qtd=100, side=buy,  cl_ord_id="t1"}, Book),
-  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, qtd=50,  side=sell, cl_ord_id="t2"}, Book),
-  n_orderbook:add_new_order_single(#order{price=9,  order_type=limit, qtd=50,  side=sell, cl_ord_id="t3"}, Book),
+  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, order_qty=100, side=buy,  cl_ord_id="t1"}, Book),
+  n_orderbook:add_new_order_single(#order{price=10, order_type=limit, order_qty=50,  side=sell, cl_ord_id="t2"}, Book),
+  n_orderbook:add_new_order_single(#order{price=9,  order_type=limit, order_qty=50,  side=sell, cl_ord_id="t3"}, Book),
   All = collect_events(EventMgrPid),
   % error_logger:info_msg("R ~p ~n", [All]),
   assertMatch(
@@ -137,9 +137,9 @@ limit_buy_first_2_test(EventMgrPid) ->
 
 limit_sell_first_2_test(EventMgrPid) ->
   Book = n_orderbook:create("PETR5"),
-  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, qtd=100, side=sell, cl_ord_id="t1"}, Book),
-  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, qtd=50,  side=buy,  cl_ord_id="t2"}, Book),
-  n_orderbook:add_new_order_single(#order{price=12, order_type=limit, qtd=50,  side=buy,  cl_ord_id="t3"}, Book),
+  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, order_qty=100, side=sell, cl_ord_id="t1"}, Book),
+  n_orderbook:add_new_order_single(#order{price=11, order_type=limit, order_qty=50,  side=buy,  cl_ord_id="t2"}, Book),
+  n_orderbook:add_new_order_single(#order{price=12, order_type=limit, order_qty=50,  side=buy,  cl_ord_id="t3"}, Book),
   All = collect_events(EventMgrPid),
   % error_logger:info_msg("R ~p ~n", [All]),
   assertMatch(
@@ -185,7 +185,7 @@ translate({Msg, {#order{cl_ord_id=ClOrdId} = Item, Reason}}) ->
    Item#order.price / 10000,
    Item#order.side,
    Item#order.order_status,
-   {qtd, Item#order.qtd},
+   {qtd, Item#order.order_qty},
    {filled, Item#order.qtd_filled},
    {left, Item#order.qtd_left},
    {last, Item#order.qtd_last},
@@ -197,7 +197,7 @@ translate({Msg, #order{cl_ord_id=ClOrdId} = Item}) ->
    Item#order.price / 10000,
    Item#order.side,
    Item#order.order_status,
-   {qtd, Item#order.qtd},
+   {qtd, Item#order.order_qty},
    {filled, Item#order.qtd_filled},
    {left, Item#order.qtd_left},
    {last, Item#order.qtd_last},
