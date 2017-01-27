@@ -62,3 +62,19 @@ quote_request_test() ->
   fix0:crack(QR),
 
   ok.
+
+
+position_maintenance_request_test() ->
+  %com os parties
+  Bin = list_to_binary("8=FIX.4.49=21935=AL34=449=CCLRA80152=20170126-18:10:41.25556=OE104C1=400455=BBDCM87E60=20170126-18:10:41453=3447=D452=36448=308447=D452=7448=DMA1447=D452=54702=1703=EX704=60000709=1710=28786_0712=1715=2017012610=102"),
+
+  %sem os parties
+  %Bin = list_to_binary("8=FIX.4.49=16235=AL34=249=CCLRA80152=20170126-22:47:08.14056=OE104C1=400455=ITUBM23E60=20170126-22:47:08453=0702=1703=EX704=500709=1710=28814_0712=1715=2017012610=204"),
+
+  {ok,PR,_Rest,_C} = fix:decode( Bin ),
+
+  error_logger:info_msg(" --- fez o decode. Deu nisto aqui ->>> ", PR),
+
+  fix:crack(PR),
+
+  ok.
