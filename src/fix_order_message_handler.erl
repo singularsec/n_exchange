@@ -9,7 +9,7 @@
 -include("../include/secexchange.hrl").
 
 handle_order_cancel_request(#order_cancel_request{} = Req, Messages, Rest, #state{} = State) ->
-  ?DBG("handle_order_cancel_request ~n ~p", fix0:crack(Req)),
+  ?DBG("handle_order_cancel_request ~n ~p", fix:crack(Req)),
   
   CancelOrder = order_cancel_from_cancel_order_request(Req),
 
