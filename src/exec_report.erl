@@ -102,32 +102,6 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
               }.
 
-build_report_for_position_maintenance_request(#position_maintenance_request{} = PR) ->
-  NewId = erlang:unique_integer([positive]),
-  %Fields = PR#position_maintenance_request.fields,
-  #position_maintenance_report{
-    pos_maint_rpt_id = PR#position_maintenance_request.pos_maint_rpt_ref_id,
-    pos_trans_type = PR#position_maintenance_request.pos_trans_type,
-    pos_req_id = PR#position_maintenance_request.pos_req_id,
-    pos_maint_action = PR#position_maintenance_request.pos_maint_action,
-    pos_maint_status = 3, %COMPLETED
-    %pos_maint_result, reason for rejection
-    clearing_business_date = PR#position_maintenance_request.clearing_business_date,
-    no_party_ids = PR#position_maintenance_request.no_party_ids,
-    %party_id_source = PR#position_maintenance_request.party_id_source,
-    %party_id = PR#position_maintenance_request.party_id,
-    %party_role = PR#position_maintenance_request.party_role,
-    trade_id = NewId,
-    account = PR#position_maintenance_request.account,
-    account_type = PR#position_maintenance_request.account_type,
-    symbol = PR#position_maintenance_request.symbol,
-    %transact_time = PR#position_maintenance_request,
-    no_positions = PR#position_maintenance_request.no_positions,
-    pos_type = PR#position_maintenance_request.pos_type,
-    long_qty = PR#position_maintenance_request.long_qty,
-    threshold_amount = PR#position_maintenance_request.threshold_amount
-  }.
-
 build_execution_report_for_position_maintenance(#position_maintenance_request{} = PR, TradeId) ->
   NewId = erlang:unique_integer([positive]),
   Qtd = #execreportqtd{order_qty= PR#position_maintenance_request.long_qty,

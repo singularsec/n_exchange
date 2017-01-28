@@ -100,17 +100,16 @@ handle_messages([{#logout{} = Logout,_}|_], _, #state{socket=Socket} = State) ->
   % kill this process
   {stop, normal, State};
 
+handle_messages([{#position_maintenance_request{} = PR,_}|Messages], Rest, #state{} = State) ->
+  ?DBG("handle_messages position_maintenance_request ~n ~p", PR),
+  option_execution_handler:handle(PR, State);
 
 handle_messages([{Msg,_Bin}|Messages], Rest, #state{} = State) ->
   ?DBG("unhandled ~n~p~n~p~n~p~n~p~n", Msg),
   handle_messages(Messages, Rest, State);
 
 handle_messages([], Rest, State) ->
-  {noreply, State#state{prevbuffer=Rest}};
-
-handle_messages([{#position_maintenance_request{} = PR,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("position maintenance request  ~n ~p", fix:crack(PR)),
-  option_execution_handler:handle(PR, State).
+  {noreply, State#state{prevbuffer=Rest}}.
 
 send(MsgType, Body, Fields, #state{socket=Socket, our_seq=Seq} = State) ->
   Sender = proplists:get_value(sender_comp_id, Fields),
