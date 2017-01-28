@@ -47,15 +47,13 @@ confirm_and_execute(PR, #state{} = State) ->
   ],
 
   NewState = fix_message_handler:send(position_maintenance_report, PrimaryFields, Fields, State),
+  error_logger:info_msg(" position_maintenance_report Received "),
 
-  error_logger:info_msg(" position_maintenance_report SENT "),
+  ReportExecution = exec_report:build_execution_report_for_position_maintenance(PR, TradeId),
+  exec_report_dispatcher:dispatch(ReportExecution),
+  Bin2 = exec_report:report_to_fix_bin(ReportExecution, 100),
+  R2 = fix:dump(Bin2),
 
-  %ReportExecution = exec_report:build_execution_report_for_position_maintenance(PR, TradeId),
-  %exec_report_dispatcher:dispatch(ReportExecution),
-  %Bin2 = exec_report:report_to_fix_bin(ReportExecution, 100),
-  %R2 = fix:dump(Bin2),
-%?DBG("Executed Position ~p~n", [R2]);
-
-  error_logger:info_msg(" ------------- FIM confirm_and_execute -------------- :-) :-)"),
+  ?DBG("position_maintenance_request Executed! ~p~n", [R2]),
 
   NewState.

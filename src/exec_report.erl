@@ -104,15 +104,15 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
 
 build_execution_report_for_position_maintenance(#position_maintenance_request{} = PR, TradeId) ->
   NewId = erlang:unique_integer([positive]),
-  Qtd = #execreportqtd{order_qty= PR#position_maintenance_request.long_qty,
+  Qtd = #execreportqtd{
+  	order_qty= PR#position_maintenance_request.long_qty,
     last= PR#position_maintenance_request.long_qty,
     leaves= 0,
-    cum= PR#position_maintenance_request.long_qty},
-  %Px = ((Leg#quote_request_leg.price * 10000.0) * Rate) + (Leg#quote_request_leg.price * 10000.0),
-  Price = 33, %#execreportprice{avg=Px, last=Px, price=Px}, preciso do preco de execucao
+    cum= PR#position_maintenance_request.long_qty
+  },
+  %Px = PR#position_maintenance_request -- teria que usar o strike,
+  %Price = 0, %#execreportprice{avg=Px, last=Px, price=Px}, preciso do preco de execucao, o strike!
   Fields = PR#position_maintenance_request.fields,
-  % FromSessId = proplists:get_value(target_comp_id, Fields),
-  % DestSessId = proplists:get_value(sender_comp_id, Fields),
   Id = "000000" ++ TradeId,
   #execreport{
     order_id = Id,
@@ -127,10 +127,8 @@ build_execution_report_for_position_maintenance(#position_maintenance_request{} 
     %side = PR#position_maintenance_request.side,
     time_in_force = fill_or_kill,
     qtd = Qtd,
-    price = Price,
+    %price = Price,
     unique_trade_id = NewId,
-    %from_sessionid = DestSessId,
-    %to_sessionid = FromSessId
     to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
     from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
   }.
