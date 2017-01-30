@@ -42,18 +42,20 @@ confirm_and_execute(PR, #state{} = State) ->
   DestSessId = proplists:get_value(target_comp_id, PR#position_maintenance_request.fields),
 
   Fields = [{cl_ord_id, PR#position_maintenance_request.pos_req_id},
-          {target_comp_id, DestSessId},
-          {sender_comp_id, FromSessId}
+          {target_comp_id, FromSessId},
+          {sender_comp_id, DestSessId}
   ],
 
   NewState = fix_message_handler:send(position_maintenance_report, PrimaryFields, Fields, State),
-  error_logger:info_msg(" position_maintenance_report Received "),
+  %?DBG("position_maintenance_request Received! PrimaryFields / Fields ", [PrimaryFields, Fields]),
 
   ReportExecution = exec_report:build_execution_report_for_position_maintenance(PR, TradeId),
+  ?DBG("position_maintenance_request Executed!", [ReportExecution]),
+
   exec_report_dispatcher:dispatch(ReportExecution),
   Bin2 = exec_report:report_to_fix_bin(ReportExecution, 100),
   R2 = fix:dump(Bin2),
 
-  ?DBG("position_maintenance_request Executed! ~p~n", [R2]),
+  %?DBG("position_maintenance_request Executed! ", [R2]),
 
   NewState.

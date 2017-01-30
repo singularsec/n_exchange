@@ -2003,9 +2003,7 @@
   pos_maint_rpt_ref_id, %not required
   clearing_business_date,
 	no_party_ids,
-	party_id_source,
-	party_id,
-	party_role,
+  %parties,
   account,
   account_type, %not required
   symbol,

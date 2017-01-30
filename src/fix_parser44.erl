@@ -212,7 +212,7 @@ decode_message([{msg_type,confirmation}|Message]) -> % Confirmation
   decode_fields(Message, #confirmation{}, confirmation, 57);
 
 decode_message([{msg_type,position_maintenance_request}|Message]) -> % PositionMaintenanceRequest
-  decode_fields(Message, #position_maintenance_request{}, position_maintenance_request, 21);
+  decode_fields(Message, #position_maintenance_request{}, position_maintenance_request, 18);
 
 decode_message([{msg_type,position_maintenance_report}|Message]) -> % PositionMaintenanceReport
   decode_fields(Message, #position_maintenance_report{}, position_maintenance_report, 24);
@@ -1941,17 +1941,14 @@ field_index(position_maintenance_request, orig_pos_req_ref_id) -> 6;
 field_index(position_maintenance_request, pos_maint_rpt_ref_id) -> 7;
 field_index(position_maintenance_request, clearing_business_date) -> 8;
 field_index(position_maintenance_request, no_party_ids) -> 9;
-field_index(position_maintenance_request, party_id_source) -> 10;
-field_index(position_maintenance_request, party_id) -> 11;
-field_index(position_maintenance_request, party_role) -> 12;
-field_index(position_maintenance_request, account) -> 13;
-field_index(position_maintenance_request, account_type) -> 14;
-field_index(position_maintenance_request, symbol) -> 15;
-field_index(position_maintenance_request, transact_time) -> 16;
-field_index(position_maintenance_request, no_positions) -> 17;
-field_index(position_maintenance_request, pos_type) -> 18;
-field_index(position_maintenance_request, long_qty) -> 19;
-field_index(position_maintenance_request, threshold_amount) -> 20;
+field_index(position_maintenance_request, account) -> 10;
+field_index(position_maintenance_request, account_type) -> 11;
+field_index(position_maintenance_request, symbol) -> 12;
+field_index(position_maintenance_request, transact_time) -> 13;
+field_index(position_maintenance_request, no_positions) -> 14;
+field_index(position_maintenance_request, pos_type) -> 15;
+field_index(position_maintenance_request, long_qty) -> 16;
+field_index(position_maintenance_request, threshold_amount) -> 17;
 field_index(position_maintenance_report, sending_time) -> 2;
 field_index(position_maintenance_report, pos_maint_rpt_id) -> 3;
 field_index(position_maintenance_report, pos_trans_type) -> 4;
@@ -2413,7 +2410,9 @@ field_index(_,_) -> undefined.
 
 decode_fields([{Code,Value}|Message], Record, RecordName, Default) ->
   Record1 = case field_index(RecordName, Code) of
-    undefined -> erlang:setelement(Default, Record, [{Code,Value}|erlang:element(Default,Record)]);
+    undefined ->
+        %error_logger:info_msg("*ERROR: couldn't decode field ", [RecordName, Code]),
+        erlang:setelement(Default, Record, [{Code,Value}|erlang:element(Default,Record)]);
     false -> Record;
     Index -> erlang:setelement(Index, Record, Value)
   end,
@@ -4119,7 +4118,7 @@ decode_typed_field(party_id_source, <<"9">>) -> 'australian_business_number';
 decode_typed_field(party_id_source, <<"A">>) -> 'australian_tax_file_number';
 decode_typed_field(party_id_source, <<"B">>) -> 'bic';
 decode_typed_field(party_id_source, <<"C">>) -> 'generally_accepted_market_participant_identifier';
-decode_typed_field(party_id_source, <<"D">>) -> 'proprietary_custom_code';
+decode_typed_field(party_id_source, <<"D">>) -> 'propcode';
 decode_typed_field(party_id_source, <<"E">>) -> 'iso_country_code';
 decode_typed_field(party_id_source, <<"F">>) -> 'settlement_entity_location';
 decode_typed_field(party_id_source, <<"G">>) -> 'mic';
@@ -5225,24 +5224,24 @@ encode_typed_field(multi_leg_reporting_type, 'single') -> <<"1">>;
 encode_typed_field(multi_leg_reporting_type, 'indivleg') -> <<"2">>;
 encode_typed_field(multi_leg_reporting_type, 'multileg') -> <<"3">>;
 encode_typed_field(encoded_list_status_text_len, V) when is_integer(V) -> list_to_binary(integer_to_list(V));
-encode_typed_field(party_id_source, 'bic') -> <<"B">>;
-encode_typed_field(party_id_source, 'generally_accepted_market_participant_identifier') -> <<"C">>;
-encode_typed_field(party_id_source, 'proprietary_custom_code') -> <<"D">>;
-encode_typed_field(party_id_source, 'iso_country_code') -> <<"E">>;
-encode_typed_field(party_id_source, 'settlement_entity_location') -> <<"F">>;
-encode_typed_field(party_id_source, 'mic') -> <<"G">>;
-encode_typed_field(party_id_source, 'csd_participant_member_code') -> <<"H">>;
-encode_typed_field(party_id_source, 'korean_investor_id') -> <<"1">>;
-encode_typed_field(party_id_source, 'taiwanese_qualified_foreign_investor_id__qfii_f_id') -> <<"2">>;
-encode_typed_field(party_id_source, 'taiwanese_trading_account') -> <<"3">>;
-encode_typed_field(party_id_source, 'malaysian_central_depository_number') -> <<"4">>;
-encode_typed_field(party_id_source, 'chinese_b_share') -> <<"5">>;
-encode_typed_field(party_id_source, 'uk_national_insurance_or_pension_number') -> <<"6">>;
-encode_typed_field(party_id_source, 'us_social_security_number') -> <<"7">>;
-encode_typed_field(party_id_source, 'us_employer_identification_number') -> <<"8">>;
 encode_typed_field(party_id_source, 'australian_business_number') -> <<"9">>;
 encode_typed_field(party_id_source, 'australian_tax_file_number') -> <<"A">>;
+encode_typed_field(party_id_source, 'bic') -> <<"B">>;
+encode_typed_field(party_id_source, 'chinese_b_share') -> <<"5">>;
+encode_typed_field(party_id_source, 'csd_participant_member_code') -> <<"H">>;
 encode_typed_field(party_id_source, 'directed_broker') -> <<"I">>;
+encode_typed_field(party_id_source, 'generally_accepted_market_participant_identifier') -> <<"C">>;
+encode_typed_field(party_id_source, 'iso_country_code') -> <<"E">>;
+encode_typed_field(party_id_source, 'korean_investor_id') -> <<"1">>;
+encode_typed_field(party_id_source, 'malaysian_central_depository_number') -> <<"4">>;
+encode_typed_field(party_id_source, 'mic') -> <<"G">>;
+encode_typed_field(party_id_source, 'propcode') -> <<"D">>;
+encode_typed_field(party_id_source, 'settlement_entity_location') -> <<"F">>;
+encode_typed_field(party_id_source, 'taiwanese_qualified_foreign_investor_id__qfii_f_id') -> <<"2">>;
+encode_typed_field(party_id_source, 'taiwanese_trading_account') -> <<"3">>;
+encode_typed_field(party_id_source, 'uk_national_insurance_or_pension_number') -> <<"6">>;
+encode_typed_field(party_id_source, 'us_employer_identification_number') -> <<"8">>;
+encode_typed_field(party_id_source, 'us_social_security_number') -> <<"7">>;
 encode_typed_field(party_role, V) when is_integer(V) -> list_to_binary(integer_to_list(V));
 encode_typed_field(no_party_ids, V) when is_integer(V) -> list_to_binary(integer_to_list(V));
 encode_typed_field(no_security_alt_id, V) when is_integer(V) -> list_to_binary(integer_to_list(V));

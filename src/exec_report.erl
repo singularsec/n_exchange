@@ -111,12 +111,12 @@ build_execution_report_for_position_maintenance(#position_maintenance_request{} 
     cum= PR#position_maintenance_request.long_qty
   },
   %Px = PR#position_maintenance_request -- teria que usar o strike,
-  %Price = 0, %#execreportprice{avg=Px, last=Px, price=Px}, preciso do preco de execucao, o strike!
+  Price = #execreportprice{avg=0, last=0, price=0}, %preciso do preco de execucao, o strike!
   Fields = PR#position_maintenance_request.fields,
-  Id = "000000" ++ TradeId,
+  Parties = fix_utils:extract_parties(Fields),
   #execreport{
-    order_id = Id,
-    secondary_order_id = "800_" ++ Id,
+    %order_id = PR#position_maintenance_request.order_id,
+    %secondary_order_id = "800_" ++ Id,
     exec_id = NewId,
     exec_type = trade,
     order_status = filled,
@@ -124,18 +124,23 @@ build_execution_report_for_position_maintenance(#position_maintenance_request{} 
     cl_ord_id = PR#position_maintenance_request.pos_req_id,
     account = PR#position_maintenance_request.account,
     symbol = PR#position_maintenance_request.symbol,
-    %side = PR#position_maintenance_request.side,
+    parties = Parties,
+    side = sell, %<<"1">>, %PR#position_maintenance_request.side,
     time_in_force = fill_or_kill,
     qtd = Qtd,
-    %price = Price,
+    price = Price,
     unique_trade_id = NewId,
-    to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
-    from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+    %to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+    %from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+    to_sessionid   = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
+    from_sessionid = binary_to_list( proplists:get_value(target_comp_id, Fields) )
   }.
 
-report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report,
-                  Seq) ->
+report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report, Seq) ->
   ReportPropList = record_to_proplist(Report),
+
+  error_logger:info_msg("report_to_fix_bin ReportPropList ~p ~n", [ReportPropList]),
+
   Body = to_fix44_body(ReportPropList),
   % error_logger:info_msg("Body ~p ~n", [Body]),
   fix:pack(execution_report, Body, Seq, DestSessId, FromSessId);
@@ -266,7 +271,9 @@ from_order(#order{id=Id, from_sessionid=FromSessId, to_sessionid=DestSessId} = O
               }.
 
 
-record_to_proplist(undefined) -> [];
+record_to_proplist(undefined) ->
+  error_logger:info_msg("record_to_proplist -undefined- ~p ~n"),
+  [];
 
 record_to_proplist(#execreport{} = Rec) ->
   lists:zip(record_info(fields, execreport), tl(tuple_to_list(Rec)));
