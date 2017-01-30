@@ -2002,7 +2002,7 @@
   orig_pos_req_ref_id, %not required
   pos_maint_rpt_ref_id, %not required
   clearing_business_date,
-	no_party_ids,
+	%no_party_ids,
   %parties,
   account,
   account_type, %not required
@@ -2026,29 +2026,29 @@
   pos_trans_type,
   pos_req_id,
   pos_maint_action,
-  orig_pos_req_ref_id,
+  %orig_pos_req_ref_id,
   pos_maint_status,
   pos_maint_result,
   clearing_business_date,
-no_party_ids,
-trade_id,
+  trade_id,
   account,
   account_type,
   symbol,
   transact_time,
-no_positions,
-pos_type,
-long_qty,
+  no_positions,
+  pos_type,
+  long_qty,
   threshold_amount,
-    from_sessionid,
-    to_sessionid,
+  from_sessionid,
+  to_sessionid,
   %threshold_percent, -- novo, nao obrigatorio
-  %memo,              -- novo, nao obrigatorio  
+  %memo,              -- novo, nao obrigatorio
   %text,
   %encoded_text,
   %legs = [],
   %underlyings = [],
   %trading_sessions = [],
+  parties=[],
   fields = []
 }).
 

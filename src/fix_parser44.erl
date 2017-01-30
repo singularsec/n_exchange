@@ -212,10 +212,10 @@ decode_message([{msg_type,confirmation}|Message]) -> % Confirmation
   decode_fields(Message, #confirmation{}, confirmation, 57);
 
 decode_message([{msg_type,position_maintenance_request}|Message]) -> % PositionMaintenanceRequest
-  decode_fields(Message, #position_maintenance_request{}, position_maintenance_request, 18);
+  decode_fields(Message, #position_maintenance_request{}, position_maintenance_request, 17);
 
 decode_message([{msg_type,position_maintenance_report}|Message]) -> % PositionMaintenanceReport
-  decode_fields(Message, #position_maintenance_report{}, position_maintenance_report, 24);
+  decode_fields(Message, #position_maintenance_report{}, position_maintenance_report, 22);
 
 decode_message([{msg_type,request_for_positions}|Message]) -> % RequestForPositions
   decode_fields(Message, #request_for_positions{}, request_for_positions, 22);
@@ -1940,37 +1940,37 @@ field_index(position_maintenance_request, pos_maint_action) -> 5;
 field_index(position_maintenance_request, orig_pos_req_ref_id) -> 6;
 field_index(position_maintenance_request, pos_maint_rpt_ref_id) -> 7;
 field_index(position_maintenance_request, clearing_business_date) -> 8;
-field_index(position_maintenance_request, no_party_ids) -> 9;
-field_index(position_maintenance_request, account) -> 10;
-field_index(position_maintenance_request, account_type) -> 11;
-field_index(position_maintenance_request, symbol) -> 12;
-field_index(position_maintenance_request, transact_time) -> 13;
-field_index(position_maintenance_request, no_positions) -> 14;
-field_index(position_maintenance_request, pos_type) -> 15;
-field_index(position_maintenance_request, long_qty) -> 16;
-field_index(position_maintenance_request, threshold_amount) -> 17;
+%field_index(position_maintenance_request, no_party_ids) -> 9;
+field_index(position_maintenance_request, account) -> 9;
+field_index(position_maintenance_request, account_type) -> 10;
+field_index(position_maintenance_request, symbol) -> 11;
+field_index(position_maintenance_request, transact_time) -> 12;
+field_index(position_maintenance_request, no_positions) -> 13;
+field_index(position_maintenance_request, pos_type) -> 14;
+field_index(position_maintenance_request, long_qty) -> 15;
+field_index(position_maintenance_request, threshold_amount) -> 16;
 field_index(position_maintenance_report, sending_time) -> 2;
 field_index(position_maintenance_report, pos_maint_rpt_id) -> 3;
 field_index(position_maintenance_report, pos_trans_type) -> 4;
 field_index(position_maintenance_report, pos_req_id) -> 5;
 field_index(position_maintenance_report, pos_maint_action) -> 6;
-field_index(position_maintenance_report, orig_pos_req_ref_id) -> 7;
-field_index(position_maintenance_report, pos_maint_status) -> 8;
-field_index(position_maintenance_report, pos_maint_result) -> 9;
-field_index(position_maintenance_report, clearing_business_date) -> 10;
-field_index(position_maintenance_report, no_party_ids) -> 11;
-field_index(position_maintenance_report, party_id_source) -> 12;
-field_index(position_maintenance_report, party_id) -> 13;
-field_index(position_maintenance_report, party_role) -> 14;
-field_index(position_maintenance_report, trade_id) -> 15;
-field_index(position_maintenance_report, account) -> 16;
-field_index(position_maintenance_report, account_type) -> 17;
-field_index(position_maintenance_report, symbol) -> 18;
-field_index(position_maintenance_report, transact_time) -> 19;
-field_index(position_maintenance_report, no_positions) -> 20;
-field_index(position_maintenance_report, pos_type) -> 21;
-field_index(position_maintenance_report, long_qty) -> 22;
-field_index(position_maintenance_report, threshold_amount) -> 23;
+%field_index(position_maintenance_report, orig_pos_req_ref_id) -> 7;
+field_index(position_maintenance_report, pos_maint_status) -> 7;
+field_index(position_maintenance_report, pos_maint_result) -> 8;
+field_index(position_maintenance_report, clearing_business_date) -> 9;
+%field_index(position_maintenance_report, no_party_ids) -> 11;
+%field_index(position_maintenance_report, party_id_source) -> 12;
+%field_index(position_maintenance_report, party_id) -> 13;
+%field_index(position_maintenance_report, party_role) -> 14;
+field_index(position_maintenance_report, trade_id) -> 10;
+field_index(position_maintenance_report, account) -> 11;
+field_index(position_maintenance_report, account_type) -> 12;
+field_index(position_maintenance_report, symbol) -> 13;
+field_index(position_maintenance_report, transact_time) -> 14;
+field_index(position_maintenance_report, no_positions) -> 15;
+field_index(position_maintenance_report, pos_type) -> 16;
+field_index(position_maintenance_report, long_qty) -> 17;
+field_index(position_maintenance_report, threshold_amount) -> 18;
 field_index(request_for_positions, sending_time) -> 2;
 field_index(request_for_positions, pos_req_id) -> 3;
 field_index(request_for_positions, pos_req_type) -> 4;
