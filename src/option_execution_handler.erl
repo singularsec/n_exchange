@@ -57,7 +57,7 @@ confirm_and_execute(PR, #state{} = State) ->
   ReportExecution = exec_report:build_execution_report_for_position_maintenance(PR, TradeId),
   ?DBG("position_maintenance_request Executed!", [ReportExecution]),
 
-  exec_report_dispatcher:dispatch(ReportExecution),
+  exec_report_dispatcher:dispatch2(ReportExecution),
   Bin2 = exec_report:report_to_fix_bin(ReportExecution, 100),
   R2 = fix:dump(Bin2),
 

@@ -115,7 +115,7 @@ build_execution_report_for_position_maintenance(#position_maintenance_request{} 
   Fields = PR#position_maintenance_request.fields,
   Parties = fix_utils:extract_parties(Fields),
   #execreport{
-    %order_id = PR#position_maintenance_request.order_id,
+    order_id = integer_to_list(NewId),
     %secondary_order_id = "800_" ++ Id,
     exec_id = NewId,
     exec_type = trade,
@@ -125,15 +125,14 @@ build_execution_report_for_position_maintenance(#position_maintenance_request{} 
     account = PR#position_maintenance_request.account,
     symbol = PR#position_maintenance_request.symbol,
     parties = Parties,
-    side = sell, %<<"1">>, %PR#position_maintenance_request.side,
+    side = sell, %<<"1">>, %PR#position_maintenance_request.side, !!!!!!!!!!!!!!
     time_in_force = fill_or_kill,
     qtd = Qtd,
     price = Price,
+    transact_time = PR#position_maintenance_request.transact_time,
     unique_trade_id = NewId,
-    %to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
-    %from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
-    to_sessionid   = binary_to_list( proplists:get_value(sender_comp_id, Fields) ),
-    from_sessionid = binary_to_list( proplists:get_value(target_comp_id, Fields) )
+    to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+    from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
   }.
 
 report_to_fix_bin(#execreport{from_sessionid=FromSessId,to_sessionid=DestSessId} = Report, Seq) ->
