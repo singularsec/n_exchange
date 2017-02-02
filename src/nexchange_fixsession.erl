@@ -55,7 +55,7 @@ handle_cast({send, #execreport{} = Report},
   Bin = exec_report:report_to_fix_bin(Report, Seq),
   gen_tcp:send(Socket, Bin),
 
-  % error_logger:info_msg("sending exec report ~p ~n", [fix0:dump(Bin)]),
+  error_logger:info_msg("sending exec report ~p ~n", [fix:dump(Bin)]),
 
   % error_logger:info_msg("sending exec report done ~p ~n", [Bin]),
   {noreply, State#state{our_seq=Seq+1}};
@@ -73,6 +73,7 @@ handle_cast({send, #cancelreject{} = Report},
   {noreply, State#state{our_seq=Seq+1}};
 
 handle_cast(_Request, State) ->
+  error_logger:info_msg("UPS -- unimplemented! --"), %  ~p ~n", [Report]),
 	{stop, unimplemented, State}.
 
 handle_info({tcp, _Socket, Data}, #state{authenticated=false,prevbuffer=PrevBuf} = State) ->

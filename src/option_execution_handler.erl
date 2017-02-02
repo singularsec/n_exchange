@@ -16,8 +16,8 @@ handle(#position_maintenance_request{} = PR, State) ->
 confirm_and_execute(PR, #state{} = State) ->
   ?DBG("Received!", [PR]),
 
-  TradeId = list_to_binary ( integer_to_list( State#state.our_seq ) ),
-  Parties = fix_utils:extract_parties(PR#position_maintenance_request.fields),
+  %TradeId = list_to_binary ( integer_to_list( State#state.our_seq ) ),
+  %Parties = fix_utils:extract_parties(PR#position_maintenance_request.fields),
   PrimaryFields =
   [
     {pos_req_id, PR#position_maintenance_request.pos_req_id },
@@ -31,12 +31,12 @@ confirm_and_execute(PR, #state{} = State) ->
     %{parties, Parties},
     {account, PR#position_maintenance_request.account},
     {symbol, PR#position_maintenance_request.symbol},
-    %{account_type, PR#position_maintenance_request.account_type },  ???????? TENHO ISTO????
+    %{account_type, PR#position_maintenance_request.account_type },
     {transact_time, PR#position_maintenance_request.transact_time },
     {{no_positions, PR#position_maintenance_request.no_positions },
       {pos_type, PR#position_maintenance_request.pos_type },
       {long_qty, PR#position_maintenance_request.long_qty }} ,
-    %{threshold_amount, PR#position_maintenance_request.threshold_amount },  ???????? TENHO ISTO????
+    %{threshold_amount, PR#position_maintenance_request.threshold_amount },
     {pos_maint_rpt_id, <<"abobrinha">>}
     %{trade_id, TradeId}
   ],
@@ -54,13 +54,29 @@ confirm_and_execute(PR, #state{} = State) ->
   NewState = fix_message_handler:send(position_maintenance_report, PrimaryFields, Fields, State),
   %?DBG("position_maintenance_request Received! PrimaryFields / Fields ", [PrimaryFields, Fields]),
 
-  ReportExecution = exec_report:build_execution_report_for_position_maintenance(PR, TradeId),
-  ?DBG("position_maintenance_request Executed!", [ReportExecution]),
+  %Gera o retorno em duas execucoes [pra gerar testes melhores], com um intervalo de 5 segundos entre eles
 
-  exec_report_dispatcher:dispatch2(ReportExecution),
-  Bin2 = exec_report:report_to_fix_bin(ReportExecution, 100),
-  R2 = fix:dump(Bin2),
+  timer:sleep(5000),
+  Qtdd1 = round(( PR#position_maintenance_request.long_qty /100)/2) * 100,
+  ReportExecution1 = exec_report:build_execution_report_for_position_maintenance(PR, Qtdd1),
+  exec_report_dispatcher:dispatch2(ReportExecution1),
+  %?DBG("position_maintenance_request Executed 1 => ", [Qtdd1, ReportExecution1]),
 
-  %?DBG("position_maintenance_request Executed! ", [R2]),
+  Bin1 = exec_report:report_to_fix_bin(ReportExecution1, 100),
+  R1 = fix:dump(Bin1),
+
+  Qtdd2 = PR#position_maintenance_request.long_qty - Qtdd1,
+  if
+    (Qtdd2 > 0) ->
+      timer:sleep(10000),
+      ReportExecution2 = exec_report:build_execution_report_for_position_maintenance(PR, Qtdd2),
+      exec_report_dispatcher:dispatch2(ReportExecution2),
+      %?DBG("position_maintenance_request Executed 2 => ", [Qtdd2, ReportExecution1]),
+
+      Bin2 = exec_report:report_to_fix_bin(ReportExecution2, 100),
+      R2 = fix:dump(Bin2)
+  end,
+
+  %?DBG("position_maintenance_request Finished! ", [R2]),
 
   NewState.

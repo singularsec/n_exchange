@@ -102,13 +102,13 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
               }.
 
-build_execution_report_for_position_maintenance(#position_maintenance_request{} = PR, TradeId) ->
+build_execution_report_for_position_maintenance(#position_maintenance_request{} = PR, ExecutedQuantity) ->
   NewId = erlang:unique_integer([positive]),
   Qtd = #execreportqtd{
-  	order_qty= PR#position_maintenance_request.long_qty,
-    last= PR#position_maintenance_request.long_qty,
+  	order_qty= ExecutedQuantity, %PR#position_maintenance_request.long_qty,
+    last= ExecutedQuantity, %PR#position_maintenance_request.long_qty,
     leaves= 0,
-    cum= PR#position_maintenance_request.long_qty
+    cum= ExecutedQuantity %PR#position_maintenance_request.long_qty
   },
   %Px = PR#position_maintenance_request -- teria que usar o strike,
   Price = #execreportprice{avg=0, last=0, price=0}, %preciso do preco de execucao, o strike!
@@ -131,6 +131,7 @@ build_execution_report_for_position_maintenance(#position_maintenance_request{} 
     price = Price,
     transact_time = PR#position_maintenance_request.transact_time,
     unique_trade_id = NewId,
+    order_category = <<"B">>,
     to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
     from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
   }.

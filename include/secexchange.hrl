@@ -64,7 +64,8 @@
                      sess_sub_id=17,
                      ord_rej_reason, security_exchange, unique_trade_id,
                      from_sessionid,
-                     to_sessionid
+                     to_sessionid,
+                     order_category
                     }).
 
 -record(cancelreject, {order_id,

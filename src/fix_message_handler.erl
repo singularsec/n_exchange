@@ -101,7 +101,6 @@ handle_messages([{#logout{} = Logout,_}|_], _, #state{socket=Socket} = State) ->
   {stop, normal, State};
 
 handle_messages([{#position_maintenance_request{} = PR,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("handle_messages position_maintenance_request ~n ~p", PR),
   option_execution_handler:handle(PR, State);
 
 handle_messages([{Msg,_Bin}|Messages], Rest, #state{} = State) ->
@@ -121,10 +120,11 @@ send(MsgType, Body, Fields, #state{socket=Socket, our_seq=Seq} = State) ->
   if 
     Socket =:= undefined -> 
       ?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]);
-    true -> 
+    true ->
+      ?DBG("wrote to socket ~n~p~n", [fix:dump(iolist_to_binary(ReplyBin))]),
       ok = gen_tcp:send(Socket, ReplyBin)
   end,
 
-  % ?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]),
+  %?DBG("wrote to socket ~n~p~n~p~n~p~n", [MsgType, Seq, fix:dump(iolist_to_binary(ReplyBin))]),
 
   State#state{our_seq=Seq + 1}.
