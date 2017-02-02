@@ -101,7 +101,7 @@ handle_messages([{#logout{} = Logout,_}|_], _, #state{socket=Socket} = State) ->
   {stop, normal, State};
 
 handle_messages([{#position_maintenance_request{} = PR,_}|Messages], Rest, #state{} = State) ->
-  option_execution_handler:handle(PR, State);
+  option_execution_handler:handle(PR, Messages, Rest, State);
 
 handle_messages([{Msg,_Bin}|Messages], Rest, #state{} = State) ->
   ?DBG("unhandled ~n~p~n~p~n~p~n~p~n", Msg),
