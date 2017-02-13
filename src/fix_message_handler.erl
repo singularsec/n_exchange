@@ -25,7 +25,7 @@ handle_messages([{#order_cancel_replace_request{} = CR,_}|Messages], Rest, #stat
   fix_order_message_handler:handle_order_cancel_replace_request(CR, Messages, Rest, State);
 
 handle_messages([{#quote_request{} = CR,_}|Messages], Rest, #state{} = State) ->
-  ?DBG("quote_request ~n ~p", fix:crack(CR)),
+  ?DBG("quote_request ~n ~p ~n", fix:crack(CR)),
   fix_forward_message_handler:handle_quote_request(CR, Messages, Rest, State);
 
 handle_messages([{#heartbeat{} = _Hb,_}|Messages], Rest, #state{} = State) ->

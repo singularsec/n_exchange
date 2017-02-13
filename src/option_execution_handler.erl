@@ -17,7 +17,7 @@ handle(#position_maintenance_request{} = PR, Messages, Rest, #state{} = State) -
 
 
 confirm_and_execute(#position_maintenance_request{} = PR, #state{} = State) ->
-  ?DBG("Received!", [PR]),
+  ?DBG("Received! ~n~p~n", [PR]),
 
   %TradeId = list_to_binary ( integer_to_list( State#state.our_seq ) ),
   %Parties = fix_utils:extract_parties(PR#position_maintenance_request.fields),
@@ -80,16 +80,16 @@ confirm_and_execute(#position_maintenance_request{} = PR, #state{} = State) ->
     {sender_comp_id, FromSessId}
   ],
 
-  ?DBG("Sending Report !", [PrimaryFields, Fields]),
+  ?DBG("Sending Report ! ~n~p~n~p~n", [PrimaryFields, Fields]),
 
   NewState = fix_message_handler:send(position_maintenance_report, PrimaryFields, Fields, State),
   %?DBG("position_maintenance_request Received! PrimaryFields / Fields ", [PrimaryFields, Fields]),
 
   if
     RequestRejected ->
-      ?DBG("position_maintenance_request REJECTED @@", []);
+      ?DBG("position_maintenance_request REJECTED *** ", []);
 
-    true ->
+    false -> %nao envia os ExecutionReport
       %Gera o retorno em duas execucoes [pra gerar testes melhores], com um intervalo de 5 segundos entre eles
 
       timer:sleep(5000),
@@ -112,6 +112,10 @@ confirm_and_execute(#position_maintenance_request{} = PR, #state{} = State) ->
           Bin2 = exec_report:report_to_fix_bin(ReportExecution2, 100),
           R2 = fix:dump(Bin2)
       end
+      ;
+
+      true ->
+        timer:sleep(10)  %faz nada!
   end,
 
   %?DBG("position_maintenance_request Finished! ", [R2]),

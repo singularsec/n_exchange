@@ -44,7 +44,7 @@ handle_call(_Request, _From, State) ->
 
 
 handle_cast({send_heartbeat, Fields}, #state{our_seq=Seq} = State) ->
-  ?DBG("sending heartbeat ~p ~n", [Seq]),
+  %?DBG("sending heartbeat ~p ~n", [Seq]),
   NewState = fix_message_handler:send(heartbeat, [], Fields, State),
   {noreply, NewState};
 
