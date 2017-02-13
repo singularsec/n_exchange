@@ -2408,11 +2408,16 @@ field_index(confirmation_request, text) -> 12;
 field_index(confirmation_request, encoded_text) -> 13;
 field_index(_,_) -> undefined.
 
-decode_fields([{Code,Value}|Message], Record, RecordName, Default) ->
+decode_fields([{Code,Value}|Message], Record, RecordName, Default) -> % Default eh o Fields
   Record1 = case field_index(RecordName, Code) of
     undefined ->
-        %error_logger:info_msg("*ERROR: couldn't decode field ", [RecordName, Code]),
-        erlang:setelement(Default, Record, [{Code,Value}|erlang:element(Default,Record)]);
+        if
+          (is_integer(Code)) ->
+            DecodedField = field_by_number(list_to_binary(integer_to_list(Code))),
+            erlang:setelement(Default, Record, [{DecodedField,Value}|erlang:element(Default,Record)]);
+          true ->
+            erlang:setelement(Default, Record, [{Code,Value}|erlang:element(Default,Record)])
+        end;
     false -> Record;
     Index -> erlang:setelement(Index, Record, Value)
   end,
@@ -3377,17 +3382,55 @@ field_by_number(<<"956">>) -> leg_interest_accrual_date;
 field_by_number(<<"1003">>) -> trade_id;
 field_by_number(<<"1057">>) -> aggressor_indicator;
 field_by_number(<<"1115">>) -> order_category;
+field_by_number(<<"1171">>) -> private_quote;
 field_by_number(<<"1180">>) -> app_id;
 field_by_number(<<"1181">>) -> appl_seq_num;
 field_by_number(<<"5149">>) -> memo;
+field_by_number(<<"5205">>) -> custom_data;
+field_by_number(<<"5206">>) -> custom_order_date;
+field_by_number(<<"5207">>) -> custom_scheduled;
+field_by_number(<<"5208">>) -> custom_scheduled_request;
+field_by_number(<<"5209">>) -> custom_cancel_previous_request;
+field_by_number(<<"5210">>) -> custom_original_exec_type;
+field_by_number(<<"5211">>) -> custom_data2;
+field_by_number(<<"5212">>) -> custom_memo;
+field_by_number(<<"5213">>) -> custom_scheduled_request_type;
+field_by_number(<<"5214">>) -> custom_forward_contra_account;
+field_by_number(<<"5220">>) -> custom_extern_order_id;
+field_by_number(<<"5221">>) -> custom_orig_extern_order_id;
+field_by_number(<<"5222">>) -> custom_first_extern_order_id;
+field_by_number(<<"5230">>) -> custom_extern_user_id;
+field_by_number(<<"5231">>) -> custom_xp_user_id;
+field_by_number(<<"5232">>) -> custom_xp_user_type;
+field_by_number(<<"5233">>) -> custom_extern_user_address;
+field_by_number(<<"5234">>) -> custom_extern_platform_id;
+field_by_number(<<"5235">>) -> custom_xp_platform_id;
+field_by_number(<<"5236">>) -> custom_advisor_id;
+field_by_number(<<"5237">>) -> custom_rejected_xp_user_id;
+field_by_number(<<"5238">>) -> custom_rejected_xp_user_type;
+field_by_number(<<"5239">>) -> custom_local_user_addr;
+field_by_number(<<"5240">>) -> custom_exchange_port_id;
+field_by_number(<<"5250">>) -> custom_can_schedule;
+field_by_number(<<"5260">>) -> custom_stop_type;
+field_by_number(<<"5261">>) -> custom_stop_gain_trigger_px;
+field_by_number(<<"5262">>) -> custom_stop_gain_order_px;
+field_by_number(<<"5263">>) -> custom_stop_loss_trigger_px;
+field_by_number(<<"5264">>) -> custom_stop_loss_order_px;
+field_by_number(<<"5265">>) -> custom_stop_triggered_side;
+field_by_number(<<"5266">>) -> custom_stop_triggered_price;
+field_by_number(<<"5267">>) -> custom_stop_triggered_time;
+field_by_number(<<"5500">>) -> custom_user_id;
+field_by_number(<<"5501">>) -> custom_parent_order_id;
+field_by_number(<<"5502">>) -> custom_client_id;
+field_by_number(<<"5503">>) -> custom_exec_id;
+field_by_number(<<"5504">>) -> custom_parent_exec_id;
 field_by_number(<<"5497">>) -> days_to_settlement;
 field_by_number(<<"5706">>) -> fixed_rate;
 field_by_number(<<"6032">>) -> unique_trade_id;
 field_by_number(<<"6092">>) -> security_trading_statusb;
 field_by_number(<<"6392">>) -> security_trading_statusc;
-field_by_number(<<"35001">>) -> protection_price;
 field_by_number(<<"10029">>) -> bts_final_tx_ord_status;
-field_by_number(<<"35033">>) -> poss_missing_appl_msg;
+field_by_number(<<"10033">>) -> orig_secondary_order_id;
 field_by_number(<<"10100">>) -> tag10100;
 field_by_number(<<"10101">>) -> tag10101;
 field_by_number(<<"10121">>) -> tag10121;
@@ -3396,7 +3439,14 @@ field_by_number(<<"10455">>) -> tag10455;
 field_by_number(<<"10645">>) -> tag10645;
 field_by_number(<<"10702">>) -> tag10702;
 field_by_number(<<"10703">>) -> tag10703;
-field_by_number(_Key) -> undefined.
+field_by_number(<<"35001">>) -> protection_price;
+field_by_number(<<"35004">>) -> execute_underlying_trade;
+field_by_number(<<"35005">>) -> quote_status_report_type;
+field_by_number(<<"35006">>) -> quote_status_response_to;
+field_by_number(<<"35033">>) -> poss_missing_appl_msg;
+field_by_number(_Key) -> 
+	error_logger:info_msg("undefined field_by_number -> ", _Key),
+	undefined.
 
 decode_typed_field(account, V) -> V;
 decode_typed_field(adv_id, V) -> V;
@@ -3442,10 +3492,10 @@ decode_typed_field(ioi_qty, V) -> V;
 decode_typed_field(ioi_trans_type, <<"C">>) -> 'cancel';
 decode_typed_field(ioi_trans_type, <<"N">>) -> 'new';
 decode_typed_field(ioi_trans_type, <<"R">>) -> 'replace';
-decode_typed_field(last_capacity, <<"1">>) -> 'a';
-decode_typed_field(last_capacity, <<"2">>) -> 'xa';
-decode_typed_field(last_capacity, <<"3">>) -> 'xp';
-decode_typed_field(last_capacity, <<"4">>) -> 'p';
+decode_typed_field(last_capacity, <<"1">>) -> 'agent';
+decode_typed_field(last_capacity, <<"2">>) -> 'cross_as_agent';
+decode_typed_field(last_capacity, <<"3">>) -> 'cross_as_principal';
+decode_typed_field(last_capacity, <<"4">>) -> 'principal';
 decode_typed_field(last_mkt, V) -> V;
 decode_typed_field(last_px, V) -> parse_num(V)*1.0;
 decode_typed_field(last_qty, V) -> parse_num(V);
@@ -4703,6 +4753,7 @@ decode_typed_field(nested3_party_sub_id_type, V) -> parse_num(V);
 decode_typed_field(leg_contract_settl_month, V) -> V;
 decode_typed_field(leg_interest_accrual_date, V) -> V;
 decode_typed_field(aggressor_indicator, V) -> V == <<"Y">>;
+decode_typed_field(private_quote, V) -> V == <<"Y">>;
 decode_typed_field(app_id, V) -> V;
 decode_typed_field(appl_seq_num, V) -> V;
 decode_typed_field(memo, V) -> V;
@@ -4727,6 +4778,9 @@ decode_typed_field(tag10455, V) -> V;
 decode_typed_field(tag10645, V) -> V == <<"Y">>;
 decode_typed_field(tag10702, V) -> V;
 decode_typed_field(tag10703, V) -> V;
+decode_typed_field(execute_underlying_trade, V) -> parse_num(V);
+decode_typed_field(quote_status_report_type, V) -> parse_num(V);
+decode_typed_field(quote_status_response_to, V) -> parse_num(V);
 decode_typed_field(_Key, V) -> V.
 
 encode_typed_field(adv_side, 'buy') -> <<"B">>;
@@ -5567,6 +5621,9 @@ encode_typed_field(no_nested3_party_sub_ids, V) when is_integer(V) -> list_to_bi
 encode_typed_field(nested3_party_sub_id_type, V) when is_integer(V) -> list_to_binary(integer_to_list(V));
 encode_typed_field(aggressor_indicator, true) -> <<"Y">>;
 encode_typed_field(aggressor_indicator,false) -> <<"N">>;
+encode_typed_field(private_quote, true) -> <<"Y">>;
+encode_typed_field(private_quote,false) -> <<"N">>;
+encode_typed_field(private_quote, _) -> <<"Y">>;  %Tmp: SETANDO UM VALOR DEFAULT PRO CASO DE NAO CONSEGUIR PARSEAR OU FOR UNDEFINED
 encode_typed_field(protection_price, V) when is_float(V) -> iolist_to_binary(io_lib:format("~.3f", [V*1.0]));
 encode_typed_field(bts_final_tx_ord_status, 'new') -> <<"0">>;
 encode_typed_field(bts_final_tx_ord_status, 'partialfilled') -> <<"1">>;
@@ -5576,8 +5633,15 @@ encode_typed_field(bts_final_tx_ord_status, 'replaced') -> <<"5">>;
 encode_typed_field(bts_final_tx_ord_status, 'rejected') -> <<"8">>;
 encode_typed_field(poss_missing_appl_msg, true) -> <<"Y">>;
 encode_typed_field(poss_missing_appl_msg,false) -> <<"N">>;
+encode_typed_field(days_to_settlement, V) when is_integer(V) -> list_to_binary(integer_to_list(V));
+encode_typed_field(days_to_settlement, _) -> list_to_binary(integer_to_list(30)); %Tmp: SETANDO UM VALOR DEFAULT PRO CASO DE NAO CONSEGUIR PARSEAR OU FOR UNDEFINED
+encode_typed_field(fixed_rate, _) -> iolist_to_binary(io_lib:format("~.3f", [12*0.001])); %Tmp: SETANDO UM VALOR DEFAULT PRO CASO DE NAO CONSEGUIR PARSEAR OU FOR UNDEFINED
 encode_typed_field(tag10645, true) -> <<"Y">>;
 encode_typed_field(tag10645,false) -> <<"N">>;
+encode_typed_field(execute_underlying_trade, V) when is_integer(V) -> list_to_binary(integer_to_list(V));
+encode_typed_field(execute_underlying_trade, _) -> list_to_binary(integer_to_list(0)); %Tmp: SETANDO UM VALOR DEFAULT PRO CASO DE NAO CONSEGUIR PARSEAR OU FOR UNDEFINED
+encode_typed_field(quote_status_report_type, V) when is_integer(V) -> list_to_binary(integer_to_list(V));
+encode_typed_field(quote_status_response_to, V) when is_integer(V) -> list_to_binary(integer_to_list(V));
 encode_typed_field(pos_type, 'allocationtradeqty') -> <<"ALC">>;
 encode_typed_field(pos_type, 'optionassignment') -> <<"AS">>;
 encode_typed_field(pos_type, 'asoftradeqty')-> <<"ASF">>;
@@ -6559,6 +6623,7 @@ number_by_field(leg_interest_accrual_date) -> <<"956">>;
 number_by_field(trade_id) -> <<"1003">>;
 number_by_field(aggressor_indicator) -> <<"1057">>;
 number_by_field(order_category) -> <<"1115">>;
+number_by_field(private_quote) -> <<"1171">>;
 number_by_field(app_id) -> <<"1180">>;
 number_by_field(appl_seq_num) -> <<"1181">>;
 number_by_field(memo) -> <<"5149">>;
@@ -6567,9 +6632,7 @@ number_by_field(fixed_rate) -> <<"5706">>;
 number_by_field(unique_trade_id) -> <<"6032">>;
 number_by_field(security_trading_statusb) -> <<"6092">>;
 number_by_field(security_trading_statusc) -> <<"6392">>;
-number_by_field(protection_price) -> <<"35001">>;
 number_by_field(bts_final_tx_ord_status) -> <<"10029">>;
-number_by_field(poss_missing_appl_msg) -> <<"35033">>;
 number_by_field(tag10100) -> <<"10100">>;
 number_by_field(tag10101) -> <<"10101">>;
 number_by_field(tag10121) -> <<"10121">>;
@@ -6578,6 +6641,11 @@ number_by_field(tag10455) -> <<"10455">>;
 number_by_field(tag10645) -> <<"10645">>;
 number_by_field(tag10702) -> <<"10702">>;
 number_by_field(tag10703) -> <<"10703">>;
+number_by_field(protection_price) -> <<"35001">>;
+number_by_field(execute_underlying_trade) -> <<"35004">>;
+number_by_field(quote_status_report_type) -> <<"35005">>;
+number_by_field(quote_status_response_to) -> <<"35006">>;
+number_by_field(poss_missing_appl_msg) -> <<"35033">>;
 number_by_field(Key) when is_binary(Key) -> Key.
 
 message_by_number(<<"0">>) -> heartbeat;
