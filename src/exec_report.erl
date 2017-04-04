@@ -103,11 +103,14 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               }.
 
 
+
+
 build_reports_for_new_cross_order(#new_order_cross{} = NewOrderCross, Symbol, #order_cross_side{} = Side) -> 
-  OrdId = erlang:unique_integer([positive]),
+  OrdId    = list_to_binary( integer_to_list( erlang:unique_integer([positive]) ) ),
   Accepted = build_accept_for_order_cross_side(OrdId, NewOrderCross, Symbol, Side),
-  Filled = build_accept_for_order_cross_side(OrdId, NewOrderCross, Symbol, Side),
+  Filled   = build_filled_for_order_cross_side(OrdId, NewOrderCross, Symbol, Side),
   [Accepted, Filled].
+
 
 build_accept_for_order_cross_side(OrdId, #new_order_cross{} = NewOrderCross, Symbol, #order_cross_side{} = Side) -> 
   NewId = erlang:unique_integer([positive]),
@@ -119,7 +122,7 @@ build_accept_for_order_cross_side(OrdId, #new_order_cross{} = NewOrderCross, Sym
   Price = #execreportprice{avg=Px, last=Px, price=Px},
   Fields = NewOrderCross#new_order_cross.fields,
   #execreport{order_id = OrdId,
-              secondary_order_id = list_to_binary("801_" ++ OrdId),
+              secondary_order_id = "801_" ++ OrdId,
               exec_id = NewId,
               exec_type = new,
               order_status = new,
@@ -158,7 +161,7 @@ build_filled_for_order_cross_side(OrdId, #new_order_cross{} = NewOrderCross, Sym
               order_status = filled,
               order_type = limit,
               cl_ord_id = Side#order_cross_side.cl_ord_id,
-              account = Side#quote_request_leg.account,
+              account = Side#order_cross_side.account,
               symbol = Symbol,
               side = Side#order_cross_side.side,
               time_in_force = fill_or_kill,
