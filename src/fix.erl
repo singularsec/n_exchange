@@ -25,6 +25,9 @@ record_to_proplist(#order_cancel_request{} = Rec) ->
 record_to_proplist(#order_cancel_replace_request{} = Rec) ->
     lists:zip(record_info(fields, order_cancel_replace_request), tl(tuple_to_list(Rec)));
 
+record_to_proplist(#new_order_cross{} = Rec) ->
+    lists:zip(record_info(fields, new_order_cross), tl(tuple_to_list(Rec)));
+
 record_to_proplist(#position_maintenance_request{} = Rec) ->
   lists:zip(record_info(fields, position_maintenance_request), tl(tuple_to_list(Rec))).
 
@@ -47,6 +50,10 @@ crack(#quote_request{} = NOS) ->
 crack(#position_maintenance_request{} = NOS) ->
   Prop = record_to_proplist(NOS),
   ?DBG("position maintenance request ~n ~p ~n", [Prop]);
+
+crack(#new_order_cross{} = NOS) ->
+  Prop = record_to_proplist(NOS),
+  ?DBG("new_order_cross ~n ~p ~n", [Prop]);
 
 crack(#logon{} = NOS) ->
     Prop = record_to_proplist(NOS),

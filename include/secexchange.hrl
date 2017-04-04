@@ -41,6 +41,8 @@
                             settl_type, account, transact_time,
                             fixed_rate, price }).
 
+-record(order_cross_side, { side, cl_ord_id, order_qty, account }).
+
 -record(execreport, {order_id,
                      secondary_order_id,
                      exec_id,

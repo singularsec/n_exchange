@@ -14,6 +14,10 @@ handle_messages([{#new_order_single{} = Order,_}|Messages], Rest, #state{} = Sta
   % ?DBG("new_order_single ~n ~p", fix:crack(Order)),
   fix_order_message_handler:handle_new_order_single(Order, Messages, Rest, State);
 
+handle_messages([{#new_order_cross{} = Order,_}|Messages], Rest, #state{} = State) ->
+  % ?DBG("new_order_single ~n ~p", fix:crack(Order)),
+  fix_order_cross_message_handler:handle_new_order_cross(Order, Messages, Rest, State);
+
 handle_messages([{#order_cancel_request{} = CR,_}|Messages], Rest, #state{} = State) ->
   ?DBG("order_cancel_request ~n ~p", fix:crack(CR)),
   fix_order_message_handler:handle_order_cancel_request(CR, Messages, Rest, State);

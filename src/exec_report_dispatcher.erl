@@ -1,12 +1,21 @@
 -module(exec_report_dispatcher).
 
--export([dispatch/1, dispatch/2, dispatch2/1]).
+-export([dispatch/1, dispatch/2, dispatch2/1, dispatch_all/1]).
 
 -include("log.hrl").
 % -include("../include/fix_session.hrl").
 % -include("../include/admin44.hrl").
 -include("../include/business44.hrl").
 -include("../include/secexchange.hrl").
+
+
+dispatch_all([Report | Rest]) ->
+  dispatch2(Report),
+  dispatch_all(Rest);
+
+dispatch_all([]) ->
+  ok.
+  
 
 dispatch2(Report = #execreport{from_sessionid=SessionId}) ->
   dispatch(Report, SessionId).

@@ -107,3 +107,47 @@ extract_quote_request_legs_atoms(account) -> true;
 extract_quote_request_legs_atoms(transact_time) -> true;
 extract_quote_request_legs_atoms(price) -> true;
 extract_quote_request_legs_atoms(_) -> false.
+
+
+extract_new_order_cross_sides(Fields) when is_list(Fields) -> 
+  % {fields,[{msg_seq_num,14},
+  %          {sender_comp_id,<<"CLEAR_3">>},
+  %          {target_comp_id,<<"XPOMS">>},
+  %          {symbol,<<"ABEV1">>},
+  %          {security_exchange,<<"XBSP">>},
+  %          {no_sides,2},
+  %          {side,buy},
+  %          {cl_ord_id,<<"16_0">>},
+  %          {account,<<"7000957">>},
+  %          {order_qty,200},
+  %          {side,sell},
+  %          {cl_ord_id,<<"17_0">>},
+  %          {account,<<"7000956">>},
+  %          {order_qty,200},
+  %          {custom_xp_user_id,<<"7000957">>},
+  %          {undefined,<<"CL_MESA">>}]}]
+  NoSides = proplists:get_value(no_sides, Fields),
+  case NoSides of
+    S when is_number(S) ->
+      NewList = lists:filter(fun ({K,_}) -> extract_new_order_cross_sides_atoms(K) end, Fields),
+      extract_new_order_cross_item(NewList);
+    _ -> []
+  end.
+
+extract_new_order_cross_sides_atoms(side) -> true;
+extract_new_order_cross_sides_atoms(cl_ord_id) -> true;
+extract_new_order_cross_sides_atoms(account) -> true;
+extract_new_order_cross_sides_atoms(order_qty) -> true;
+extract_new_order_cross_sides_atoms(_) -> false.
+
+extract_new_order_cross_item(Fields) when is_list(Fields) ->
+  case lists:keyfind(side, 1, Fields) of
+    false  -> [];
+    {_,Side} ->
+      {ClOr,NewList2}  = get_and_remove(cl_ord_id, Fields),
+      {Qtdy,NewList3}  = get_and_remove(order_qty, NewList2),
+      {Acct,NewList4}  = get_and_remove(account, NewList3),
+      FinalList = lists:keydelete(side, 1, NewList4),
+      NewSide = #order_cross_side{ account=Acct, side=Side, cl_ord_id=ClOr, order_qty=Qtdy },
+      [NewSide] ++ extract_new_order_cross_item(FinalList)
+  end.

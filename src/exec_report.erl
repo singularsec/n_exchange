@@ -102,6 +102,76 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
               from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
               }.
 
+
+build_reports_for_new_cross_order(#new_order_cross{} = NewOrderCross, Symbol, #order_cross_side{} = Side) -> 
+  OrdId = erlang:unique_integer([positive]),
+  Accepted = build_accept_for_order_cross_side(OrdId, NewOrderCross, Symbol, Side),
+  Filled = build_accept_for_order_cross_side(OrdId, NewOrderCross, Symbol, Side),
+  [Accepted, Filled].
+
+build_accept_for_order_cross_side(OrdId, #new_order_cross{} = NewOrderCross, Symbol, #order_cross_side{} = Side) -> 
+  NewId = erlang:unique_integer([positive]),
+  Qtd = #execreportqtd{order_qty= Side#order_cross_side.order_qty,
+                       last= 0,
+                       leaves= Side#order_cross_side.order_qty,
+                       cum= 0},
+  Px = NewOrderCross#new_order_cross.price,
+  Price = #execreportprice{avg=Px, last=Px, price=Px},
+  Fields = NewOrderCross#new_order_cross.fields,
+  #execreport{order_id = OrdId,
+              secondary_order_id = list_to_binary("801_" ++ OrdId),
+              exec_id = NewId,
+              exec_type = new,
+              order_status = new,
+              order_type = limit,
+              cl_ord_id = Side#order_cross_side.cl_ord_id,
+              account = Side#order_cross_side.account,
+              symbol = Symbol,
+              side = Side#order_cross_side.side,
+              time_in_force = fill_or_kill,
+              qtd = Qtd,
+              price = Price,
+              ord_rej_reason = 99, % needs constant?
+              security_exchange = <<"XBSP">>,
+              % from_sessionid = DestSessId,
+              % to_sessionid = FromSessId
+              to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+              from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+              }.
+
+
+build_filled_for_order_cross_side(OrdId, #new_order_cross{} = NewOrderCross, Symbol, #order_cross_side{} = Side) -> 
+  NewId = erlang:unique_integer([positive]),
+  Qtd = #execreportqtd{order_qty= Side#order_cross_side.order_qty,
+                       last= Side#order_cross_side.order_qty,
+                       leaves= 0,
+                       cum= Side#order_cross_side.order_qty},
+  Px = NewOrderCross#new_order_cross.price * 10000.0,
+  Price = #execreportprice{avg=Px, last=Px, price=Px},
+  Fields = NewOrderCross#new_order_cross.fields,
+
+  % Id = "000000" ++ QuoteId,
+  #execreport{order_id = OrdId,
+              secondary_order_id = "801_" ++ OrdId,
+              exec_id = NewId,
+              exec_type = trade,
+              order_status = filled,
+              order_type = limit,
+              cl_ord_id = Side#order_cross_side.cl_ord_id,
+              account = Side#quote_request_leg.account,
+              symbol = Symbol,
+              side = Side#order_cross_side.side,
+              time_in_force = fill_or_kill,
+              qtd = Qtd,
+              price = Price,
+              unique_trade_id = NewId,
+              %from_sessionid = DestSessId,
+              %to_sessionid = FromSessId
+              to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+              from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+              }.
+
+
 build_execution_report_for_position_maintenance(#position_maintenance_request{} = PR, ExecutedQuantity) ->
   NewId = erlang:unique_integer([positive]),
   Qtd = #execreportqtd{
@@ -156,7 +226,7 @@ report_to_fix_bin(#cancelreject{from_sessionid=FromSessId,to_sessionid=DestSessI
 
 cancel_reject_from_order(#order_cancel_request{} = Order, Reason) ->
 
-  NewId = erlang:unique_integer([positive]),
+  % NewId = erlang:unique_integer([positive]),
 
   Fields     = Order#order_cancel_request.fields,
   FromSessId = proplists:get_value(target_comp_id, Fields),
@@ -376,7 +446,7 @@ to_fix44_body([{parties, PartyList}|Rest]) ->
   Fields = to_fix44_body_party(PartyList),
   Fields ++ to_fix44_body(Rest);
 
-to_fix44_body([{Key, undefined} | Rest]) ->
+to_fix44_body([{_, undefined} | Rest]) ->
   to_fix44_body(Rest);
 
 to_fix44_body([{Key, Val} | Rest]) ->
