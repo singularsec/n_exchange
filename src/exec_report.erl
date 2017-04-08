@@ -108,8 +108,9 @@ build_filled_for_quote_request_leg(#quote_request{} = QR, #quote_request_leg{} =
 build_reports_for_new_cross_order(#new_order_cross{} = NewOrderCross, Symbol, #order_cross_side{} = Side) -> 
   OrdId    = list_to_binary( integer_to_list( erlang:unique_integer([positive]) ) ),
   Accepted = build_accept_for_order_cross_side(OrdId, NewOrderCross, Symbol, Side),
+  PartialFilled   = build_partialfilled_for_order_cross_side(OrdId, NewOrderCross, Symbol, Side),
   Filled   = build_filled_for_order_cross_side(OrdId, NewOrderCross, Symbol, Side),
-  [Accepted, Filled].
+  [Accepted, PartialFilled, Filled].
 
 
 build_accept_for_order_cross_side(OrdId, #new_order_cross{} = NewOrderCross, Symbol, #order_cross_side{} = Side) -> 
@@ -142,13 +143,43 @@ build_accept_for_order_cross_side(OrdId, #new_order_cross{} = NewOrderCross, Sym
               from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
               }.
 
+build_partialfilled_for_order_cross_side(OrdId, #new_order_cross{} = NewOrderCross, Symbol, #order_cross_side{} = Side) ->
+  NewId = erlang:unique_integer([positive]),
+  Qtd = #execreportqtd{order_qty= Side#order_cross_side.order_qty,
+    last= round((Side#order_cross_side.order_qty /100)/2) * 100,
+    leaves= Side#order_cross_side.order_qty - round((Side#order_cross_side.order_qty /100)/2) * 100,
+    cum= round((Side#order_cross_side.order_qty /100)/2) * 100},
+  Px = NewOrderCross#new_order_cross.price * 10000.0,
+  Price = #execreportprice{avg=Px, last=Px, price=Px},
+  Fields = NewOrderCross#new_order_cross.fields,
+
+  % Id = "000000" ++ QuoteId,
+  #execreport{order_id = OrdId,
+    secondary_order_id = "801_" ++ OrdId,
+    exec_id = NewId,
+    exec_type = trade,
+    order_status = partial_filled,
+    order_type = limit,
+    cl_ord_id = Side#order_cross_side.cl_ord_id,
+    account = Side#order_cross_side.account,
+    symbol = Symbol,
+    side = Side#order_cross_side.side,
+    time_in_force = fill_or_kill,
+    qtd = Qtd,
+    price = Price,
+    unique_trade_id = NewId,
+    %from_sessionid = DestSessId,
+    %to_sessionid = FromSessId
+    to_sessionid   = binary_to_list( proplists:get_value(target_comp_id, Fields) ),
+    from_sessionid = binary_to_list( proplists:get_value(sender_comp_id, Fields) )
+  }.
 
 build_filled_for_order_cross_side(OrdId, #new_order_cross{} = NewOrderCross, Symbol, #order_cross_side{} = Side) -> 
   NewId = erlang:unique_integer([positive]),
   Qtd = #execreportqtd{order_qty= Side#order_cross_side.order_qty,
-                       last= Side#order_cross_side.order_qty,
+                       last= Side#order_cross_side.order_qty - round((Side#order_cross_side.order_qty /100)/2) * 100,
                        leaves= 0,
-                       cum= Side#order_cross_side.order_qty},
+                       cum= Side#order_cross_side.order_qty - round((Side#order_cross_side.order_qty /100)/2) * 100},
   Px = NewOrderCross#new_order_cross.price * 10000.0,
   Price = #execreportprice{avg=Px, last=Px, price=Px},
   Fields = NewOrderCross#new_order_cross.fields,
