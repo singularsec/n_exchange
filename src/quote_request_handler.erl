@@ -137,11 +137,17 @@ confirm_and_execute(QR, [#quote_request_leg{} = Leg | Rest], #state{} = State) -
   R1 = fix0:dump(Bin1),
   % ?DBG("New ~p~n", [R1]),
 
-  ReportFilled = exec_report:build_filled_for_quote_request_leg(QR, Leg, QuoteId),
-  exec_report_dispatcher:dispatch2(ReportFilled),
-  Bin2 = exec_report:report_to_fix_bin(ReportFilled, 100),
+  ReportPartiallFilled = exec_report:build_partialfilled_for_quote_request_leg(QR, Leg, QuoteId),
+  exec_report_dispatcher:dispatch2(ReportPartiallFilled),
+  Bin2 = exec_report:report_to_fix_bin(ReportPartiallFilled, 100),
   R2 = fix0:dump(Bin2),
   % ?DBG("Filled ~p~n", [R2]),
+
+  ReportFilled = exec_report:build_filled_for_quote_request_leg(QR, Leg, QuoteId),
+  exec_report_dispatcher:dispatch2(ReportFilled),
+  Bin3 = exec_report:report_to_fix_bin(ReportFilled, 100),
+  R3 = fix0:dump(Bin3),
+  % ?DBG("Filled ~p~n", [R3]),
 
   confirm_and_execute(QR, Rest, NewState);
 
